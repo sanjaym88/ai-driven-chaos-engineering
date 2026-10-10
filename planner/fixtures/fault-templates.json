@@ -1,0 +1,25 @@
+{
+  "templates": [
+    {
+      "candidate_id": "network-delay-001",
+      "target": "podinfo-backend",
+      "fault_type": "network_delay",
+      "allowed_intensities_ms": [
+        100,
+        250,
+        500
+      ],
+      "max_duration_seconds": 10
+    },
+    {
+      "candidate_id": "connection-failure-001",
+      "target": "podinfo-backend",
+      "fault_type": "connection_failure",
+      "allowed_intensities": [
+        "limited"
+      ],
+      "max_duration_seconds": 5
+    }
+  ],
+  "review_notes": "Mock templates only; P3 must confirm supported fault types and parameter units."
+}

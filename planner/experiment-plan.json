@@ -1,0 +1,18 @@
+{
+  "run_id": "run-20261010T093627Z",
+  "candidate_id": "network-delay-001",
+  "target": "podinfo-backend",
+  "fault_type": "latency",
+  "intensity": 100,
+  "max_duration": 5,
+  "stop_thresholds": {
+    "max_error_rate": 0.05,
+    "max_latency_p95_ms": 500,
+    "required_health": "healthy"
+  },
+  "reason_codes": [
+    "APPROVED_TEMPLATE",
+    "MAPPED_DEPENDENCY",
+    "BASELINE_HEALTHY"
+  ]
+}
