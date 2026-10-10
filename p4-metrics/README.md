@@ -1,5 +1,7 @@
 # P4 metrics and deterministic evaluation
 
+For a shared Python environment and complete P5 handover, follow the [root runbook](../P5-HANDOVER.md). With `--p3-run-state`, fault sampling waits for injection before starting its timer. Recovery is incomplete without requests/raw latency evidence, and failed if recovery health is not healthy. A valid evaluation is not a resilience pass.
+
 P4 sends bounded traffic to the caller route for a planned dependency, records timestamped one-second metric windows as JSONL, and evaluates baseline, fault, and recovery data together with P3's run result. Each JSONL object represents one observation window; `latency.values` contains the individual request durations observed in that window. These are not one-JSON-object-per-request records.
 
 Files under `examples/` and the root `metrics.jsonl` / `result.json` are clearly illustrative fixtures; they are not live experiment results.

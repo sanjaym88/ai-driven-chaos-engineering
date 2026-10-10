@@ -123,3 +123,9 @@ def test_baseline_full_of_errors_blocks_the_run(env, plan):
     write_metrics(tmp, [bad])
     (runs_dir() / "watchdog.alive").write_text(str(now()))
     assert "baseline unhealthy (too many errors)" in preflight(plan, load_safety()).reasons
+
+
+def test_reused_run_id_is_blocked(env, plan):
+    from chaos.config import run_dir, write_json
+    write_json(run_dir(plan["run_id"]) / "result.json", {"status": "completed"})
+    assert any("already used" in reason for reason in preflight(plan, load_safety()).reasons)

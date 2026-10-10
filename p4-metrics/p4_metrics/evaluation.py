@@ -147,8 +147,12 @@ def evaluate_run(run_id: str, baseline: MetricsWindow, fault: MetricsWindow, rec
         )
         
     # Example logic for recovery verification
-    if recovery.is_empty:
+    if recovery.is_empty or not any(r.request_count > 0 for r in recovery.records):
         recovery_result = "incomplete"
+    elif not any(r.latency.values for r in baseline.records) or not any(r.latency.values for r in recovery.records):
+        recovery_result = "incomplete"
+    elif any(r.health != "healthy" for r in recovery.records) or p3_result.get("recovery_result") == "not_recovered":
+        recovery_result = "failed"
     else:
         base_err = aggregate_error_rate(baseline)
         rec_err = aggregate_error_rate(recovery)
@@ -173,5 +177,6 @@ def evaluate_run(run_id: str, baseline: MetricsWindow, fault: MetricsWindow, rec
         stop_reason=stop_reason,
         cleanup_verified=cleanup_verified,  
         recovery_result=recovery_result,
-        failure_flags=failure_flags
+        failure_flags=failure_flags,
+        evidence_refs=p3_result.get("evidence_refs", []),
     )

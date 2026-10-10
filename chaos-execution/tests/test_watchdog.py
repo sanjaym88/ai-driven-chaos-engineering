@@ -175,3 +175,12 @@ def test_watchdog_cleans_up_a_connection_disabled_run(env, plan):
     tp.add_fault(PROXY, "connection-disabled", toxic_name(rid), 1)
     watchdog.tick(tp, load_safety())
     assert state["enabled"] is True and read_json(rd / "watchdog.json")["cleanup_verified"]
+
+
+def test_malformed_telemetry_does_not_prevent_deadline_cleanup(env, plan):
+    state, tmp = env
+    tp, rd = arm(plan, started=now() - 100, deadline_in=5)
+    write_metrics(tmp, [fault_row("t1", errors="bad", reqs=10, p95=100)])
+    watchdog.tick(tp, load_safety())
+    assert_cleaned(tp, rd, "duration_expired")
+    assert "metrics_unreadable" in read_json(rd / "watchdog.json")["all_triggers"]

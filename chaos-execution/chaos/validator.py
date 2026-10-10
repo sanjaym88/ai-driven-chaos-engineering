@@ -89,7 +89,7 @@ def read_metrics(path, run_id: str, phase: str) -> list:
             r = json.loads(line)
         except json.JSONDecodeError:
             continue
-        if r.get("run_id") == run_id and r.get("phase") == phase:
+        if isinstance(r, dict) and r.get("run_id") == run_id and r.get("phase") == phase:
             rows.append(r)
     return rows
 
@@ -125,6 +125,8 @@ def watchdog_alive(safety: dict, t: float | None = None) -> bool:
 def preflight(plan: dict, safety: dict) -> Verdict:
     """Dynamic prerequisites. Any failure -> BLOCKED, no fault injected."""
     v = Verdict()
+    if (runs_dir() / plan["run_id"] / "run.json").exists() or (runs_dir() / plan["run_id"] / "result.json").exists():
+        v.reasons.append("run_id already used; generate a new plan")
     reason = baseline_ok(plan, safety)
     if reason:
         v.reasons.append(reason)

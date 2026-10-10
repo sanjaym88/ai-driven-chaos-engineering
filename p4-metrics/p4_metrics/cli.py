@@ -103,7 +103,9 @@ def evaluate_metrics(args):
 
     print(f"Loading metrics from {args.metrics_file} for run '{run_id}'...")
     records = load_metrics_file(args.metrics_file)
-    valid_records = validate_run_id_consistency(records, run_id)
+    # The shared append-only feed contains multiple runs. Select this run
+    # before applying the strict single-run contract; never pool their metrics.
+    valid_records = validate_run_id_consistency([r for r in records if r.run_id == run_id], run_id)
     
     windows = separate_windows(valid_records)
     

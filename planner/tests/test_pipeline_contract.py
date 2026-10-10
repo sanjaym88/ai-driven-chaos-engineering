@@ -43,3 +43,18 @@ def test_connection_disabled_named_intensity_becomes_p3_numeric_flag():
     assert plan["fault_type"] == "connection-disabled"
     assert plan["intensity"] == 1
     assert validate_plan(plan, load_safety(), load_service_map()).ok
+
+
+def test_blocked_planner_removes_old_plan_and_exits_nonzero(tmp_path, monkeypatch):
+    import pytest
+    import planner.planner as module
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+    (tmp_path / "experiment-plan.json").write_text('{"run_id":"old"}')
+    baseline_path = tmp_path / "baseline.json"
+    baseline_path.write_text(json.dumps(load_fixture("baseline.json")))
+    monkeypatch.setattr(sys, "argv", ["planner", "--service-map", str(P3_ROOT / "sandbox/service-map.json"),
+        "--baseline", str(baseline_path), "--fault-templates", str(Path(__file__).parents[1] / "fixtures/fault-templates.json")])
+    with pytest.raises(SystemExit) as exc:
+        module.main()
+    assert exc.value.code == 1
+    assert not (tmp_path / "experiment-plan.json").exists()
