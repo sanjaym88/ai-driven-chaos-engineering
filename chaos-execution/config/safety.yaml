@@ -1,0 +1,58 @@
+# Versioned safety rules. Enforced by chaos/validator.py and chaos/watchdog.py.
+version: 2
+
+sandbox:
+  toxiproxy_url: http://127.0.0.1:8474   # management API (localhost only)
+  frontend_url: http://127.0.0.1:9898    # app under test (from sandbox/service-map.json)
+  metrics_path: runs/metrics.jsonl       # P4 writes, we read (baseline + live thresholds)
+
+# Allowlist. Target = Toxiproxy proxy name = dependency link in service-map.json.
+targets:
+  podinfo-backend:
+    allowed_faults: [latency, timeout, reset_peer, limit_data, bandwidth, connection-disabled]
+
+# Per-fault intensity range (inclusive) and unit. Toxics apply to the downstream (response) direction.
+faults:
+  latency:             # adds delay to every response
+    unit: ms
+    min_intensity: 1
+    max_intensity: 2000
+  timeout:             # stalls data, closes the connection after N ms
+    unit: ms
+    min_intensity: 1
+    max_intensity: 5000
+  reset_peer:          # resets the connection (TCP RST) after N ms
+    unit: ms
+    min_intensity: 1
+    max_intensity: 5000
+  limit_data:          # closes the connection after N bytes of response
+    unit: bytes
+    min_intensity: 1
+    max_intensity: 1000000
+  bandwidth:           # throttles the link to N KB/s
+    unit: KB/s
+    min_intensity: 1
+    max_intensity: 100000
+  connection-disabled: # disables the proxy listener (connections refused / dropped)
+    unit: flag
+    min_intensity: 1
+    max_intensity: 1
+
+limits:
+  max_duration_s: 60
+  baseline_max_age_s: 120
+  baseline_min_requests: 20
+  baseline_max_error_rate: 0.1           # a baseline with more errors than this is not 'healthy' -> run blocked
+  max_error_rate: 0.5                    # a plan may not set a looser stop threshold than these
+  max_p95_latency_ms: 5000
+
+watchdog:
+  poll_interval_s: 1
+  alive_timeout_s: 5                     # preflight blocks if the watchdog heartbeat is older
+  runner_heartbeat_timeout_s: 5
+  threshold_window_s: 10
+  cleanup_retries: 3
+
+recovery:
+  timeout_s: 30
+  poll_interval_s: 1

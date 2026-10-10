@@ -1,0 +1,16 @@
+{"run_id": "full1-004", "timestamp": 1791621788.288931, "phase": "baseline", "request_count": 20, "errors": 0, "latency": {"p95": 28.925000000000004}, "health": "ok"}
+{"run_id": "full1-004", "timestamp": 1791621789.2903502, "phase": "baseline", "request_count": 20, "errors": 0, "latency": {"p95": 29.48}, "health": "ok"}
+{"run_id": "full1-004", "timestamp": 1791621790.3034356, "phase": "baseline", "request_count": 21, "errors": 0, "latency": {"p95": 31.5}, "health": "ok"}
+{"run_id": "full1-004", "timestamp": 1791621791.3069167, "phase": "baseline", "request_count": 19, "errors": 0, "latency": {"p95": 30.75}, "health": "ok"}
+{"run_id": "full1-004", "timestamp": 1791621792.3191137, "phase": "baseline", "request_count": 21, "errors": 0, "latency": {"p95": 32.8}, "health": "ok"}
+{"run_id": "full1-004", "timestamp": 1791621793.3209114, "phase": "baseline", "request_count": 13, "errors": 0, "latency": {"p95": 13.460000000000004}, "health": "ok"}
+{"run_id": "full1-004", "timestamp": 1791621794.3226607, "phase": "baseline", "request_count": 1, "errors": 0, "latency": {"p95": 426.3}, "health": "ok"}
+{"run_id": "full1-004", "timestamp": 1791621794.3226607, "phase": "fault", "request_count": 18, "errors": 0, "latency": {"p95": 433.59499999999997}, "health": "ok"}
+{"run_id": "full1-004", "timestamp": 1791621795.3330529, "phase": "fault", "request_count": 20, "errors": 0, "latency": {"p95": 431.69}, "health": "ok"}
+{"run_id": "full1-004", "timestamp": 1791621796.3349957, "phase": "fault", "request_count": 20, "errors": 0, "latency": {"p95": 435.71999999999997}, "health": "ok"}
+{"run_id": "full1-004", "timestamp": 1791621797.3522015, "phase": "fault", "request_count": 20, "errors": 0, "latency": {"p95": 434.115}, "health": "ok"}
+{"run_id": "full1-004", "timestamp": 1791621798.3690913, "phase": "fault", "request_count": 24, "errors": 0, "latency": {"p95": 439.59000000000003}, "health": "ok"}
+{"run_id": "full1-004", "timestamp": 1791621798.3690913, "phase": "recovery", "request_count": 5, "errors": 0, "latency": {"p95": 24.659999999999997}, "health": "ok"}
+{"run_id": "full1-004", "timestamp": 1791621799.3890564, "phase": "recovery", "request_count": 20, "errors": 0, "latency": {"p95": 32.46}, "health": "ok"}
+{"run_id": "full1-004", "timestamp": 1791621800.4037092, "phase": "recovery", "request_count": 20, "errors": 0, "latency": {"p95": 32.195}, "health": "ok"}
+{"run_id": "full1-004", "timestamp": 1791621801.4188333, "phase": "recovery", "request_count": 21, "errors": 0, "latency": {"p95": 29.8}, "health": "ok"}

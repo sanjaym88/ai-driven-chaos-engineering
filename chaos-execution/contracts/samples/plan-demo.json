@@ -1,0 +1,10 @@
+{
+  "run_id": "demo-001",
+  "candidate_id": "network-delay-demo",
+  "target": "podinfo-backend",
+  "fault_type": "latency",
+  "intensity": 800,
+  "max_duration": 40,
+  "stop_thresholds": {"max_error_rate": 0.5, "max_latency_p95_ms": 3000, "required_health": "healthy"},
+  "reason_codes": ["DEMO"]
+}
