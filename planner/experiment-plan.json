@@ -1,5 +1,5 @@
 {
-  "run_id": "run-20261010T084324Z",
+  "run_id": "run-20261010T093627Z",
   "candidate_id": "network-delay-001",
   "target": "podinfo-backend",
   "fault_type": "latency",

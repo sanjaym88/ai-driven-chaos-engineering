@@ -1,10 +1,10 @@
 {
-  "observed_at": "2026-10-10T09:19:50.677777+00:00",
+  "observed_at": "2026-10-10T09:37:51.792946+00:00",
   "source": "local-docker-live-requests",
   "sample_count": 30,
   "completed_requests": 30,
   "errors": 0,
-  "latency_p95_ms": 2070.957,
+  "latency_p95_ms": 2075.997,
   "error_rate": 0.0,
   "health": "healthy"
 }
