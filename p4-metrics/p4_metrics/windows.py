@@ -44,6 +44,8 @@ def check_stale_baseline(baseline: MetricsWindow, fault: MetricsWindow, max_gap_
         return False, "No fault data yet; baseline validity cannot be checked."
         
     gap = (fault.start_time - baseline.end_time).total_seconds()
+    if gap < 0:
+        return True, "Baseline ends after fault measurements begin; phase timestamps are out of order."
     if gap > max_gap_seconds:
         return True, f"Baseline is stale (gap of {gap:.1f} seconds exceeds limit of {max_gap_seconds}s)."
         

@@ -1,3 +1,2 @@
-pydantic>=2.0.0
-pytest
-aiohttp
+aiohttp>=3.9,<4
+pydantic>=2.0,<3

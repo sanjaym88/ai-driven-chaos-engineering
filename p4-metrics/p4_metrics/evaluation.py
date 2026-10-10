@@ -1,3 +1,4 @@
+from math import ceil
 from typing import List, Dict, Optional
 from .models import ResultEvaluation
 from .windows import MetricsWindow, check_stale_baseline
@@ -9,6 +10,13 @@ def aggregate_latency(window: MetricsWindow) -> float:
     for r in window.records:
         all_values.extend(r.latency.values)
     return sum(all_values) / len(all_values) if all_values else 0.0
+
+def aggregate_percentile(window: MetricsWindow, percentile: float) -> float:
+    values = sorted(value for record in window.records for value in record.latency.values)
+    if not values:
+        return 0.0
+    index = max(0, min(len(values) - 1, ceil(percentile * len(values)) - 1))
+    return values[index]
 
 def aggregate_error_rate(window: MetricsWindow) -> float:
     if window.is_empty:
@@ -25,8 +33,8 @@ def extract_failure_flags(baseline: MetricsWindow, fault: MetricsWindow) -> List
     flags = []
     base_err = aggregate_error_rate(baseline)
     fault_err = aggregate_error_rate(fault)
-    base_lat = aggregate_latency(baseline)
-    fault_lat = aggregate_latency(fault)
+    base_lat = aggregate_percentile(baseline, 0.95)
+    fault_lat = aggregate_percentile(fault, 0.95)
     
     # Error rate analysis
     if fault_err > base_err + 0.05:
@@ -35,10 +43,10 @@ def extract_failure_flags(baseline: MetricsWindow, fault: MetricsWindow) -> List
         flags.append("SEVERE_SERVICE_DEGRADATION")
         
     # Latency analysis
-    if base_lat > 0 and fault_lat > (base_lat * 2):
-        flags.append("LATENCY_DOUBLED")
-    elif base_lat > 0 and fault_lat > (base_lat * 5):
+    if base_lat > 0 and fault_lat > (base_lat * 5):
         flags.append("LATENCY_CRITICAL_SPIKE")
+    elif base_lat > 0 and fault_lat > (base_lat * 2):
+        flags.append("LATENCY_DOUBLED")
         
     # Health analysis
     if any(r.health == "unhealthy" for r in fault.records):
@@ -71,6 +79,72 @@ def evaluate_run(run_id: str, baseline: MetricsWindow, fault: MetricsWindow, rec
             recovery_result="unknown",
             failure_flags=[]
         )
+
+    if not any(record.request_count > 0 for record in baseline.records):
+        return ResultEvaluation(run_id=run_id, status="invalid", stop_reason="Baseline contains no request observations", cleanup_verified=False, recovery_result="unknown", failure_flags=[])
+
+    if not any(record.request_count > 0 for record in fault.records):
+        return ResultEvaluation(run_id=run_id, status="invalid", stop_reason="Fault phase contains no request observations", cleanup_verified=False, recovery_result="unknown", failure_flags=[])
+
+    if not isinstance(p3_result, dict):
+        return ResultEvaluation(
+            run_id=run_id,
+            status="invalid",
+            stop_reason="Missing P3 result",
+            cleanup_verified=False,
+            recovery_result="unknown",
+            failure_flags=[]
+        )
+
+    if p3_result.get("run_id") != run_id:
+        return ResultEvaluation(
+            run_id=run_id,
+            status="invalid",
+            stop_reason="P3 result run_id mismatch",
+            cleanup_verified=False,
+            recovery_result="unknown",
+            failure_flags=[]
+        )
+
+    if p3_result.get("status") not in {"completed", "aborted", "failed", "blocked"}:
+        return ResultEvaluation(
+            run_id=run_id,
+            status="invalid",
+            stop_reason="P3 result missing or invalid status",
+            cleanup_verified=False,
+            recovery_result="unknown",
+            failure_flags=[]
+        )
+
+    if not isinstance(p3_result.get("stop_reason"), str) or not p3_result["stop_reason"].strip():
+        return ResultEvaluation(
+            run_id=run_id,
+            status="invalid",
+            stop_reason="P3 result missing stop_reason",
+            cleanup_verified=False,
+            recovery_result="unknown",
+            failure_flags=[]
+        )
+
+    if not isinstance(p3_result.get("cleanup_verified"), bool):
+        return ResultEvaluation(
+            run_id=run_id,
+            status="invalid",
+            stop_reason="P3 result missing cleanup_verified",
+            cleanup_verified=False,
+            recovery_result="unknown",
+            failure_flags=[]
+        )
+
+    if not p3_result["cleanup_verified"]:
+        return ResultEvaluation(
+            run_id=run_id,
+            status="invalid",
+            stop_reason="P3 cleanup was not verified",
+            cleanup_verified=False,
+            recovery_result="unknown",
+            failure_flags=[]
+        )
         
     # Example logic for recovery verification
     if recovery.is_empty:
@@ -78,8 +152,8 @@ def evaluate_run(run_id: str, baseline: MetricsWindow, fault: MetricsWindow, rec
     else:
         base_err = aggregate_error_rate(baseline)
         rec_err = aggregate_error_rate(recovery)
-        base_lat = aggregate_latency(baseline)
-        rec_lat = aggregate_latency(recovery)
+        base_lat = aggregate_percentile(baseline, 0.95)
+        rec_lat = aggregate_percentile(recovery, 0.95)
         
         # If error rate and latency return to near-baseline levels, mark successful
         if rec_err <= base_err + 0.05 and rec_lat <= base_lat * 1.5:
@@ -89,13 +163,13 @@ def evaluate_run(run_id: str, baseline: MetricsWindow, fault: MetricsWindow, rec
             
     failure_flags = extract_failure_flags(baseline, fault)
     
-    # Consume P3's actual cleanup/result record if provided
-    stop_reason = p3_result.get("stop_reason", "MAX_DURATION_REACHED") if p3_result else "MAX_DURATION_REACHED"
-    cleanup_verified = p3_result.get("cleanup_verified", False) if p3_result else True
+    stop_reason = p3_result["stop_reason"]
+    cleanup_verified = p3_result["cleanup_verified"]
             
     return ResultEvaluation(
         run_id=run_id,
         status="valid",
+        p3_status=p3_result["status"],
         stop_reason=stop_reason,
         cleanup_verified=cleanup_verified,  
         recovery_result=recovery_result,

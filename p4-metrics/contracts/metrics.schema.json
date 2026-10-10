@@ -1,0 +1,235 @@
+{
+  "$defs": {
+    "LatencySummary": {
+      "properties": {
+        "unit": {
+          "const": "ms",
+          "default": "ms",
+          "title": "Unit",
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "title": "Values",
+          "type": "array"
+        },
+        "p50": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "P50"
+        },
+        "p95": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "P95"
+        },
+        "p99": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "P99"
+        }
+      },
+      "title": "LatencySummary",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "run_id": {
+      "minLength": 1,
+      "title": "Run Id",
+      "type": "string"
+    },
+    "timestamp": {
+      "format": "date-time",
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "phase": {
+      "enum": [
+        "baseline",
+        "fault",
+        "recovery"
+      ],
+      "title": "Phase",
+      "type": "string"
+    },
+    "request_count": {
+      "minimum": 0,
+      "title": "Request Count",
+      "type": "integer"
+    },
+    "errors": {
+      "minimum": 0,
+      "title": "Errors",
+      "type": "integer"
+    },
+    "latency": {
+      "$ref": "#/$defs/LatencySummary"
+    },
+    "health": {
+      "enum": [
+        "healthy",
+        "degraded",
+        "unhealthy",
+        "unknown"
+      ],
+      "title": "Health",
+      "type": "string"
+    },
+    "status_codes": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Status Codes",
+      "type": "object"
+    },
+    "request_method": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Request Method"
+    },
+    "request_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Request Url"
+    },
+    "status_code": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Status Code"
+    },
+    "throughput_rps": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Throughput Rps"
+    },
+    "window_start": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Window Start"
+    },
+    "window_end": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Window End"
+    },
+    "source": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source"
+    },
+    "sample_count": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sample Count"
+    },
+    "schema_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "1.0",
+      "title": "Schema Version"
+    }
+  },
+  "required": [
+    "run_id",
+    "timestamp",
+    "phase",
+    "request_count",
+    "errors",
+    "latency",
+    "health"
+  ],
+  "title": "MetricRecord",
+  "type": "object"
+}
