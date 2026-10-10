@@ -1,0 +1,14 @@
+{
+  "schema_version": "0.1",
+  "environment": "local-docker",
+  "verification_status": "fixture-matches-p1-topology",
+  "services": [
+    {"id": "podinfo-frontend", "kind": "application", "host_url": "http://localhost:9898", "health_path": "/healthz"},
+    {"id": "toxiproxy", "kind": "network-proxy", "management_url": "http://localhost:8474", "proxy_name": "podinfo-backend", "listen_port": 8666},
+    {"id": "podinfo-backend", "kind": "application", "container_port": 9898}
+  ],
+  "dependencies": [
+    {"from": "podinfo-frontend", "to": "podinfo-backend", "protocol": "http", "path": "POST /echo", "via": "toxiproxy:8666"}
+  ],
+  "user_journey": ["POST http://localhost:9898/echo"]
+}

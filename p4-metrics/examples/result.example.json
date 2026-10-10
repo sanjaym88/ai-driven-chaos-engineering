@@ -1,0 +1,10 @@
+{
+  "run_id": "demo-run-001",
+  "status": "valid",
+  "p3_status": "completed",
+  "stop_reason": "duration_elapsed",
+  "cleanup_verified": true,
+  "recovery_result": "success",
+  "failure_flags": ["LATENCY_CRITICAL_SPIKE"],
+  "evidence_refs": ["runs/demo-run-001/metrics.jsonl", "runs/demo-run-001/p3-result.json"]
+}
