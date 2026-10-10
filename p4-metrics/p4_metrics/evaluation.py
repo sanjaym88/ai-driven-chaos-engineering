@@ -106,11 +106,11 @@ def evaluate_run(run_id: str, baseline: MetricsWindow, fault: MetricsWindow, rec
             failure_flags=[]
         )
 
-    if p3_result.get("status") not in {"completed", "aborted", "failed", "blocked"}:
+    if p3_result.get("status") not in {"completed", "aborted"}:
         return ResultEvaluation(
             run_id=run_id,
             status="invalid",
-            stop_reason="P3 result missing or invalid status",
+            stop_reason="P3 result status is not completed or safely aborted",
             cleanup_verified=False,
             recovery_result="unknown",
             failure_flags=[]

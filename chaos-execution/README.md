@@ -86,6 +86,11 @@ Manual stop: `.\scripts\kill.ps1`. Clean up after experiments: `.\scripts\reset.
 | `metrics.jsonl` | P4 -> P3 | path in `config/safety.yaml`; baseline and fault rows carry the run ID |
 | `result.json`, `events.jsonl`, `journal.json` | P3 -> P4, P5 | `runs/<run_id>/`, `runs/events.jsonl` |
 
+### P4 sampler handoff
+The configured `runs/metrics.jsonl` is the shared file P3 reads for fresh baseline checks and live watchdog thresholds. P4 must append its baseline, fault, and recovery phases to this path. Its safety-trip flag is written beside the metrics file and P3 checks it on every watchdog tick. During the fault phase, P4 accepts the run's `runs/<run_id>/run.json` path and stops sampling when P3 reaches `stopped` or `cleanup_failed`.
+
+Use either P4's traffic sampler or the P3 campaign's built-in traffic generator for a run; do not run both against the same service at once. P3's `campaign` is still useful for standalone repeated fault matrices, while P5 should coordinate P4 as the sole sampler when consuming the shared P4 evaluation output.
+
 ## Output for P4 / P5 (what P3 writes)
 | File | Contents |
 |---|---|

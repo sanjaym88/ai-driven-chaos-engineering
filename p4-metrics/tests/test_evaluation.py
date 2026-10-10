@@ -61,6 +61,21 @@ def test_mismatched_or_unverified_p3_result_fails_closed():
     assert mismatch.status == "invalid" and "mismatch" in mismatch.stop_reason
     assert cleanup.status == "invalid" and cleanup.cleanup_verified is False
 
+
+def test_failed_or_blocked_p3_run_cannot_be_reported_as_valid():
+    now = datetime.now(timezone.utc)
+    records = [
+        MetricRecord(run_id="r1", timestamp=now, phase="baseline", request_count=10, errors=0, latency=LatencySummary(values=[10]), health="healthy"),
+        MetricRecord(run_id="r1", timestamp=now + timedelta(seconds=1), phase="fault", request_count=10, errors=0, latency=LatencySummary(values=[20]), health="healthy"),
+    ]
+    windows = separate_windows(records)
+    for status in ("failed", "blocked"):
+        p3 = good_p3()
+        p3["status"] = status
+        result = evaluate_run("r1", windows["baseline"], windows["fault"], windows["recovery"], p3)
+        assert result.status == "invalid"
+        assert "not completed" in result.stop_reason
+
 def test_latency_spikes_classified_by_p95_severity():
     now = datetime.now(timezone.utc)
     baseline = MetricRecord(run_id="r1", timestamp=now, phase="baseline", request_count=4, errors=0, latency=LatencySummary(values=[10, 10, 10, 10]), health="healthy")

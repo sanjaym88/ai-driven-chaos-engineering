@@ -112,6 +112,16 @@ def test_p2_threshold_names_trigger_stop(env, plan):
     assert_cleaned(tp, rd, "threshold_breach:p95_latency")
 
 
+def test_p4_safety_trip_file_stops_and_cleans(env, plan):
+    """P4's immediate safety signal shares the directory of P3's metrics file."""
+    state, tmp = env
+    tp, rd = arm(plan)
+    flag = tmp / f"safety-trip-{plan['run_id']}.flag"
+    flag.write_text("LATENCY_P95_BREACH_900ms", encoding="utf8")
+    watchdog.tick(tp, load_safety())
+    assert_cleaned(tp, rd, "p4_safety_trip:LATENCY_P95_BREACH_900ms")
+
+
 def test_multiple_triggers_are_all_recorded(env, plan):
     """Kill switch + error-rate breach + latency breach at once: primary reason first, all listed."""
     state, tmp = env

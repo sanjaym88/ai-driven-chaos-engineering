@@ -21,24 +21,36 @@ P4 accepts the verified P1 service map where `services` and `dependencies` are a
 
 The `examples/service-map.example.json` file mirrors that P1 map contract. For a real run, pass P1's verified `service-map.json` explicitly; don't assume a fixture is verified just because it parses.
 
-## Run phases
+## P2 → P3 → P4 run
 
-P5 (or a local operator during manual testing) coordinates the phase order. P4 does not launch P3 itself:
+The P3 watchdog reads `chaos-execution/runs/metrics.jsonl`. P4 must append every phase to that same file so P3 can verify a fresh baseline and observe live thresholds. P4 also writes its safety-trip flag beside that file, where P3's watchdog checks it. Use one unique `run_id` and only one active experiment per Toxiproxy target.
 
-1. Run `p4-metrics traffic --service-map <P1-map.json> --experiment-plan <plan.json> --phase baseline --duration 10 --output runs/<run_id>/metrics.jsonl`.
-2. Start P4's `--phase fault` sampler and P3's experiment at the same time. The P4 fault sampler runs for the plan's `max_duration`; P3 must stop/rollback on duration, threshold, or manual stop. If P3 stops early, P5 stops the fault sampler and starts the recovery sampler after cleanup.
-3. Run `p4-metrics traffic ... --phase recovery --duration 10 --output runs/<run_id>/metrics.jsonl` only after P3 confirms cleanup.
-4. Evaluate after all three phases and P3's terminal result are available:
+From the repository root, after starting the P1 sandbox and installing P3/P4 dependencies:
 
-```powershell
-p4-metrics evaluate --experiment-plan <plan.json> --metrics-file runs/<run_id>/metrics.jsonl --p3-result runs/<run_id>/p3-result.json --output runs/<run_id>/result.json
-```
+1. Start P3's independent watchdog in its own terminal from `chaos-execution`:
+   `python -m chaos.watchdog`
+2. Generate P2's plan using the verified sandbox map and a live 30-request baseline:
+   `python -m planner.planner`
+   This writes `planner/experiment-plan.json`. P2 fails closed if the baseline is unhealthy or older than five minutes.
+3. Capture a fresh P4 baseline immediately before P3 preflight (at 10 requests/second, 5 seconds exceeds P3's 20-request minimum):
+   `p4-metrics traffic --service-map chaos-execution/sandbox/service-map.json --experiment-plan planner/experiment-plan.json --phase baseline --duration 5 --output chaos-execution/runs/metrics.jsonl`
+4. In one terminal, start P4's fault sampler; it exits when P3 writes a terminal `run.json` state:
+   `p4-metrics traffic --service-map chaos-execution/sandbox/service-map.json --experiment-plan planner/experiment-plan.json --phase fault --output chaos-execution/runs/metrics.jsonl --p3-run-state chaos-execution/runs/<run_id>/run.json`
+5. In a second terminal, start P3 with that exact plan:
+   `cd chaos-execution; .\\scripts\\run.ps1 ..\\planner\\experiment-plan.json`
+   P3's watchdog handles deadline, P4 safety trips, configured thresholds, and manual stop, then removes the toxic and verifies recovery.
+6. After P3 has written `chaos-execution/runs/<run_id>/result.json`, collect recovery data:
+   `p4-metrics traffic --service-map chaos-execution/sandbox/service-map.json --experiment-plan planner/experiment-plan.json --phase recovery --duration 5 --output chaos-execution/runs/metrics.jsonl`
+7. Evaluate the complete run:
+   `p4-metrics evaluate --experiment-plan planner/experiment-plan.json --metrics-file chaos-execution/runs/metrics.jsonl --p3-result chaos-execution/runs/<run_id>/result.json --output chaos-execution/runs/<run_id>/p4-result.json`
 
-The P3 result is required for evaluation. It must contain the same `run_id`, a `status` of `completed`, `aborted`, `failed`, or `blocked`, a non-empty `stop_reason`, and boolean `cleanup_verified`. Missing/mismatched metrics, missing phases, stale baseline, or unverified cleanup fail closed. `--phase fault` is sampled concurrently with injection; do not run multiple experiments against the same proxy at once.
+P3's campaign command runs its own traffic generator and should not run alongside P4 traffic for the same experiment. P5 should coordinate one sampler, start fault sampling with P3, wait for P3 cleanup before recovery sampling, and then invoke evaluation.
+
+The P3 result must have the same `run_id`, status `completed` or `aborted`, a non-empty `stop_reason`, and `cleanup_verified: true`. Missing/mismatched metrics, missing phases, stale baseline, failed/blocked P3 status, or unverified cleanup produce an invalid evaluation.
 
 ## Safety signal
 
-When a configured latency-p95 or error-rate stop threshold is crossed, P4 writes `safety-trip-<run_id>.flag` in its current working directory. P3's independent watchdog must monitor that exact shared path and stop/clean the fault. This flag is a signal to P3; P4 is not the watchdog and cannot guarantee cleanup by itself. Use a unique run ID and shared working directory for P3/P4, or adapt both sides to a shared explicit signal path before running them in separate containers.
+When a configured latency-p95 or error-rate stop threshold is crossed, P4 writes `safety-trip-<run_id>.flag` beside the shared metrics file. P3's independent watchdog reads that path and stops/cleans the fault. P4 is a signal source; P3 remains responsible for cleanup verification.
 
 Thresholds are fractions for `max_error_rate` (for example `0.05` = 5%). The canonical latency key is `max_latency_p95_ms`; `max_p95_latency_ms` and `max_latency_ms` are accepted for compatibility. Latency is measured in milliseconds.
 

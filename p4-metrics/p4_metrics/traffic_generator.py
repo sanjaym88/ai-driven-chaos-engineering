@@ -2,6 +2,7 @@ import asyncio
 import math
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 import aiohttp
 from typing import Any, Callable, Dict, Optional
 from .models import MetricRecord, LatencySummary
@@ -10,7 +11,7 @@ class TrafficGenerator:
     """
     Generates steady HTTP traffic. Includes Addons for P1 (Health Checks) and P3 (Watchdog).
     """
-    def __init__(self, target_url: str, health_url: Optional[str] = None, request_timeout: float = 2.0, max_concurrency: int = 10, stop_thresholds: Optional[Dict[str, float]] = None, request_method: str = "GET", request_body: Optional[Any] = None):
+    def __init__(self, target_url: str, health_url: Optional[str] = None, request_timeout: float = 2.0, max_concurrency: int = 10, stop_thresholds: Optional[Dict[str, float]] = None, request_method: str = "GET", request_body: Optional[Any] = None, safety_flag_dir: Optional[str] = None, p3_run_state_path: Optional[str] = None):
         self.target_url = target_url
         self.health_url = health_url or target_url 
         self.request_timeout = request_timeout
@@ -19,6 +20,8 @@ class TrafficGenerator:
         self.stop_thresholds = stop_thresholds or {}
         self.request_method = request_method.upper()
         self.request_body = request_body
+        self.safety_flag_dir = Path(safety_flag_dir) if safety_flag_dir else Path.cwd()
+        self.p3_run_state_path = Path(p3_run_state_path) if p3_run_state_path else None
         self._safety_trip_written = False
 
     async def _make_request(self, session: aiohttp.ClientSession, url: str, method: str = "GET", body: Optional[Any] = None) -> tuple[float, bool, Optional[int]]:
@@ -58,7 +61,9 @@ class TrafficGenerator:
             trip_reasons.append(f"ERROR_RATE_BREACH_{error_rate:.2f}")
             
         if trip_reasons and not self._safety_trip_written:
-            with open(f"safety-trip-{run_id}.flag", "w") as f:
+            self.safety_flag_dir.mkdir(parents=True, exist_ok=True)
+            flag_path = self.safety_flag_dir / f"safety-trip-{run_id}.flag"
+            with open(flag_path, "w", encoding="utf-8") as f:
                 f.write(";".join(trip_reasons))
             self._safety_trip_written = True
             print(f"SAFETY TRIP SIGNAL FOR P3: {';'.join(trip_reasons)}")
@@ -85,6 +90,12 @@ class TrafficGenerator:
         async with aiohttp.ClientSession() as session:
             while self.is_running and (time.monotonic() < stop_at or pending_requests or pending_health or window_opened_at < stop_at):
                 now = time.monotonic()
+
+                # During the fault phase, stop sampling as soon as P3's runner
+                # or watchdog records terminal cleanup. This prevents normal
+                # post-cleanup traffic from being mislabeled as fault data.
+                if phase == "fault" and self._p3_run_finished():
+                    stop_at = min(stop_at, now)
 
                 # Schedule requests at a fixed arrival rate instead of sending a burst
                 # and then waiting for the slowest response before sending the next.
@@ -169,3 +180,13 @@ class TrafficGenerator:
                 # Poll frequently enough to keep both request arrival and window
                 # boundaries close to their configured cadence.
                 await asyncio.sleep(0.01)
+
+    def _p3_run_finished(self) -> bool:
+        if self.p3_run_state_path is None:
+            return False
+        try:
+            import json
+            state = json.loads(self.p3_run_state_path.read_text(encoding="utf-8")).get("state")
+        except (OSError, ValueError, AttributeError):
+            return False
+        return state in {"stopped", "cleanup_failed"}
