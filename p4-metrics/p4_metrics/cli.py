@@ -57,6 +57,14 @@ def evaluate_metrics(args):
         plan = json.load(f)
     run_id = plan.get("run_id")
 
+    p3_result = None
+    if args.p3_result:
+        try:
+            with open(args.p3_result, 'r') as f:
+                p3_result = json.load(f)
+        except FileNotFoundError:
+            print(f"Warning: P3 result file {args.p3_result} not found.")
+
     print(f"Loading metrics from {args.metrics_file} for run '{run_id}'...")
     records = load_metrics_file(args.metrics_file)
     valid_records = validate_run_id_consistency(records, run_id)
@@ -67,7 +75,8 @@ def evaluate_metrics(args):
         run_id=run_id,
         baseline=windows["baseline"],
         fault=windows["fault"],
-        recovery=windows["recovery"]
+        recovery=windows["recovery"],
+        p3_result=p3_result
     )
     
     with open(args.output, 'w') as f:
@@ -92,6 +101,7 @@ def main():
     eval_parser = subparsers.add_parser("evaluate", help="Evaluate run metrics for reporting")
     eval_parser.add_argument("--experiment-plan", default="contracts/experiment-plan.example.json", help="P3 Experiment Plan")
     eval_parser.add_argument("--metrics-file", required=True, help="Path to metrics.jsonl")
+    eval_parser.add_argument("--p3-result", help="Path to P3's result.json file")
     eval_parser.add_argument("--output", default="result.json", help="Output result JSON file")
     
     args = parser.parse_args()

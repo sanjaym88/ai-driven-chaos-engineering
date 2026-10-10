@@ -8,7 +8,7 @@ class LatencySummary(BaseModel):
     
     # ADDON FOR P5: Percentiles computed automatically so the dashboard UI doesn't have to do the math.
     p50: Optional[float] = None
-    p90: Optional[float] = None
+    p95: Optional[float] = None
     p99: Optional[float] = None
 
 class MetricRecord(BaseModel):
