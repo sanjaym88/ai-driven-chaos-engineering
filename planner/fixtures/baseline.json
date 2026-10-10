@@ -1,0 +1,9 @@
+{
+  "run_id": "baseline-mock-001",
+  "sample_count": 100,
+  "latency_p95_ms": 120,
+  "error_rate": 0.0,
+  "health": "healthy",
+  "captured_at": "2026-01-01T00:00:00Z",
+  "review_notes": "Mock values only; replace with P4's agreed baseline contract."
+}

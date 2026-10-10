@@ -1,0 +1,31 @@
+{
+  "ranked_candidates": [
+    {
+      "candidate_id": "network-delay-001",
+      "target": "podinfo-backend",
+      "fault_type": "network_delay",
+      "intensity": 100,
+      "max_duration": 5,
+      "score": 25,
+      "reason_codes": [
+        "APPROVED_TEMPLATE",
+        "MAPPED_DEPENDENCY",
+        "BASELINE_HEALTHY"
+      ]
+    },
+    {
+      "candidate_id": "connection-failure-001",
+      "target": "podinfo-backend",
+      "fault_type": "connection_failure",
+      "intensity": "limited",
+      "max_duration": 5,
+      "score": 5,
+      "reason_codes": [
+        "APPROVED_TEMPLATE",
+        "MAPPED_DEPENDENCY",
+        "BASELINE_HEALTHY"
+      ]
+    }
+  ],
+  "rejected_candidates": []
+}

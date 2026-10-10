@@ -1,0 +1,66 @@
+{
+  "schema_version": "0.1",
+  "environment": "local-docker",
+  "verification_status": "verified",
+  "services": [
+    {
+      "id": "podinfo-frontend",
+      "kind": "application",
+      "image": "ghcr.io/stefanprodan/podinfo:6.15.0",
+      "container_port": 9898,
+      "host_url": "http://localhost:9898",
+      "health_path": "/healthz",
+      "ready_path": "/readyz"
+    },
+    {
+      "id": "toxiproxy",
+      "kind": "network-proxy",
+      "management_url": "http://localhost:8474",
+      "proxy_name": "podinfo-backend",
+      "listen_port": 8666,
+      "upstream": "backend:9898",
+      "faults_for_demo": [
+        "latency",
+        "timeout",
+        "connection-disabled"
+      ]
+    },
+    {
+      "id": "podinfo-backend",
+      "kind": "application",
+      "image": "ghcr.io/stefanprodan/podinfo:6.15.0",
+      "container_port": 9898,
+      "health_path": "/healthz",
+      "ready_path": "/readyz"
+    }
+  ],
+  "dependencies": [
+    {
+      "from": "podinfo-frontend",
+      "to": "podinfo-backend",
+      "protocol": "http",
+      "path": "POST /echo",
+      "via": "toxiproxy:8666",
+      "verification": "passed"
+    }
+  ],
+  "user_journey": [
+    "POST http://localhost:9898/echo",
+    "frontend forwards to backend through Toxiproxy",
+    "response returns to caller"
+  ],
+  "notes": [
+    "This topology runs two instances of Podinfo. The frontend uses --backend-url to reach the backend through the Toxiproxy data listener.",
+    "Docker Compose DNS name backend resolves to the podinfo-backend container on the private project network.",
+    "Redis is omitted because this P1 sample does not need it."
+  ],
+  "verification": {
+    "date": "2026-10-10",
+    "checks": [
+      "frontend healthz HTTP 200",
+      "backend healthz HTTP 200",
+      "Toxiproxy proxy podinfo-backend enabled with upstream backend:9898",
+      "POST /echo payload returned through frontend -> Toxiproxy -> backend"
+    ]
+  }
+}
