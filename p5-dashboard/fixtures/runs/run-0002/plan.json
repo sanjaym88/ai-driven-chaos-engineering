@@ -1,0 +1,22 @@
+{
+  "run_id": "run-0002",
+  "candidate_id": "lat-fe-be-2500",
+  "target": "frontend->backend",
+  "fault_type": "latency",
+  "intensity": {
+    "latency_ms": 2500,
+    "jitter_ms": 0
+  },
+  "max_duration_s": 30,
+  "stop_thresholds": {
+    "p95_ms": 2000,
+    "error_rate": 0.2
+  },
+  "reason_codes": [
+    "R_EDGE_ON_USER_PATH",
+    "R_THRESHOLD_PROBE"
+  ],
+  "score": 0.74,
+  "rank": 2,
+  "planner": "rule-baseline v1 (mock)"
+}

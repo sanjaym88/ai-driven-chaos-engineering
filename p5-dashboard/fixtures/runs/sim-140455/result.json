@@ -1,0 +1,21 @@
+{
+  "run_id": "sim-140455",
+  "status": "completed",
+  "started_at": "2026-10-10T08:34:55Z",
+  "ended_at": "2026-10-10T08:35:35Z",
+  "fault_started_at": "2026-10-10T08:35:05Z",
+  "fault_ended_at": "2026-10-10T08:35:25Z",
+  "stop_reason": "duration_expired",
+  "stopped_by": null,
+  "cleanup_verified": true,
+  "recovery_result": {
+    "status": "recovered",
+    "recovery_time_s": 4.0
+  },
+  "evidence_refs": [
+    {
+      "type": "metrics",
+      "path": "metrics.jsonl"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "result.json",
+  "type": "object",
+  "required": ["run_id", "status", "stop_reason", "cleanup_verified", "recovery_result", "evidence_refs"],
+  "properties": {
+    "run_id": {"type": "string"},
+    "status": {"enum": ["completed", "aborted", "failed", "blocked"]},
+    "started_at": {"type": ["string", "null"]},
+    "ended_at": {"type": ["string", "null"]},
+    "stop_reason": {"type": ["string", "null"]},
+    "cleanup_verified": {"type": ["boolean", "null"]},
+    "recovery_result": {
+      "type": ["object", "null"],
+      "properties": {
+        "status": {"enum": ["recovered", "not_recovered", "not_applicable", "unknown"]},
+        "recovery_time_s": {"type": ["number", "null"]}
+      }
+    },
+    "evidence_refs": {"type": "array", "items": {"type": "object", "required": ["type", "path"]}}
+  }
+}

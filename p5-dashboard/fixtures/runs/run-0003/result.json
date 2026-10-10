@@ -1,0 +1,25 @@
+{
+  "run_id": "run-0003",
+  "status": "failed",
+  "started_at": "2026-10-09T09:20:00Z",
+  "ended_at": "2026-10-09T09:21:50Z",
+  "fault_started_at": "2026-10-09T09:20:30Z",
+  "fault_ended_at": "2026-10-09T09:20:50Z",
+  "stop_reason": "duration_expired",
+  "cleanup_verified": false,
+  "failure_detail": "cleanup check: toxic 'reset_peer_downstream' still listed on proxy 'backend' after 3 retries",
+  "recovery_result": {
+    "status": "not_recovered",
+    "recovery_time_s": null
+  },
+  "evidence_refs": [
+    {
+      "type": "journal",
+      "path": "journal.json"
+    },
+    {
+      "type": "metrics",
+      "path": "metrics.jsonl"
+    }
+  ]
+}

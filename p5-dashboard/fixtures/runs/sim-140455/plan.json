@@ -1,0 +1,21 @@
+{
+  "run_id": "sim-140455",
+  "candidate_id": "sim-lat-800",
+  "target": "frontend->backend",
+  "fault_type": "latency",
+  "intensity": {
+    "latency_ms": 800
+  },
+  "max_duration_s": 20,
+  "stop_thresholds": {
+    "p95_ms": 2000,
+    "error_rate": 0.2
+  },
+  "reason_codes": [
+    "R_EDGE_ON_USER_PATH",
+    "R_SIMULATED"
+  ],
+  "score": 0.8,
+  "rank": 1,
+  "planner": "simulator"
+}

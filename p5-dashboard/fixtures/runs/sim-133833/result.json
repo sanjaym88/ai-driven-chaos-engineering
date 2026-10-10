@@ -1,0 +1,21 @@
+{
+  "run_id": "sim-133833",
+  "status": "aborted",
+  "started_at": "2026-10-10T08:08:33Z",
+  "ended_at": "2026-10-10T08:08:56Z",
+  "fault_started_at": "2026-10-10T08:08:43Z",
+  "fault_ended_at": "2026-10-10T08:08:46Z",
+  "stop_reason": "threshold_breach: p95 3275 ms > 2000 ms",
+  "stopped_by": "watchdog",
+  "cleanup_verified": true,
+  "recovery_result": {
+    "status": "recovered",
+    "recovery_time_s": 4.0
+  },
+  "evidence_refs": [
+    {
+      "type": "metrics",
+      "path": "metrics.jsonl"
+    }
+  ]
+}

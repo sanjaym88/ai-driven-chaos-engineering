@@ -1,0 +1,21 @@
+{
+  "run_id": "run-0003",
+  "candidate_id": "reset-fe-be",
+  "target": "frontend->backend",
+  "fault_type": "reset_peer",
+  "intensity": {
+    "timeout_ms": 0
+  },
+  "max_duration_s": 20,
+  "stop_thresholds": {
+    "p95_ms": 2000,
+    "error_rate": 0.2
+  },
+  "reason_codes": [
+    "R_EDGE_ON_USER_PATH",
+    "R_CONNECTION_FAULT"
+  ],
+  "score": 0.61,
+  "rank": 3,
+  "planner": "rule-baseline v1 (mock)"
+}

@@ -1,0 +1,24 @@
+{
+  "run_id": "run-0001",
+  "status": "completed",
+  "started_at": "2026-10-09T09:00:00Z",
+  "ended_at": "2026-10-09T09:01:20Z",
+  "fault_started_at": "2026-10-09T09:00:30Z",
+  "fault_ended_at": "2026-10-09T09:01:00Z",
+  "stop_reason": "duration_expired",
+  "cleanup_verified": true,
+  "recovery_result": {
+    "status": "recovered",
+    "recovery_time_s": 4.0
+  },
+  "evidence_refs": [
+    {
+      "type": "journal",
+      "path": "journal.json"
+    },
+    {
+      "type": "metrics",
+      "path": "metrics.jsonl"
+    }
+  ]
+}

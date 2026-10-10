@@ -1,0 +1,20 @@
+{
+  "run_id": "run-0004",
+  "status": "blocked",
+  "started_at": "2026-10-09T09:30:00Z",
+  "ended_at": "2026-10-09T09:30:00Z",
+  "fault_started_at": null,
+  "fault_ended_at": null,
+  "stop_reason": "blocked: baseline stale (last sample 94 s old > 10 s limit)",
+  "cleanup_verified": null,
+  "recovery_result": {
+    "status": "not_applicable",
+    "recovery_time_s": null
+  },
+  "evidence_refs": [
+    {
+      "type": "metrics",
+      "path": "metrics.jsonl"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "version": "1",
+  "services": [
+    {
+      "id": "client",
+      "name": "Traffic generator (P4)",
+      "port": null,
+      "health_check": null
+    },
+    {
+      "id": "frontend",
+      "name": "Podinfo frontend",
+      "port": 9898,
+      "health_check": "/readyz"
+    },
+    {
+      "id": "toxiproxy",
+      "name": "Toxiproxy (fault point)",
+      "port": 8474,
+      "health_check": "/version"
+    },
+    {
+      "id": "backend",
+      "name": "Podinfo backend",
+      "port": 9899,
+      "health_check": "/readyz"
+    }
+  ],
+  "edges": [
+    {
+      "from": "client",
+      "to": "frontend",
+      "via": null,
+      "verified": true
+    },
+    {
+      "from": "frontend",
+      "to": "backend",
+      "via": "toxiproxy:backend",
+      "verified": true
+    }
+  ],
+  "request_paths": [
+    {
+      "name": "home",
+      "endpoint": "GET /",
+      "path": [
+        "client",
+        "frontend"
+      ]
+    },
+    {
+      "name": "echo",
+      "endpoint": "POST /echo",
+      "path": [
+        "client",
+        "frontend",
+        "backend"
+      ]
+    }
+  ],
+  "notes": [
+    "MOCK map from P5 fixtures. Redis not configured, so not claimed as a dependency.",
+    "Frontend /echo returns HTTP 200 even when the backend call fails; P4 counts those as errors."
+  ],
+  "reviewed_by": "P1 (mock)",
+  "source": "docker-compose.yml + manual review"
+}

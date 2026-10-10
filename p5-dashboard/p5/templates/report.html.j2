@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Run {{ f.run_id }} report</title>
+<style>
+:root{--bg:#f7f7f4;--fg:#1c1c1a;--muted:#696962;--card:#fff;--line:#e2e1da;--teal:#0f766e;--rose:#be123c;
+--series:#2a78d6;--band-fault:rgba(82,81,78,.14);--band-rec:rgba(82,81,78,.06);
+--s-completed:#15803d;--s-aborted:#c2410c;--s-failed:#b91c1c;--s-blocked:#475569}
+@media (prefers-color-scheme:dark){:root{--bg:#151514;--fg:#ecebe5;--muted:#a09f98;--card:#1f1f1d;--line:#34332e;--teal:#2dd4bf;--rose:#fb7185;
+--series:#3987e5;--band-fault:rgba(195,194,183,.16);--band-rec:rgba(195,194,183,.07)}}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:860px;margin:0 auto;padding:28px 16px 48px}
+h1{font-size:24px;margin:0}h2{font-size:17px;margin:28px 0 10px}
+.muted{color:var(--muted)}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.03em}
+.st-completed{background:var(--s-completed)}.st-aborted{background:var(--s-aborted)}.st-failed{background:var(--s-failed)}.st-blocked{background:var(--s-blocked)}.st-unknown{background:#777}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:13px}
+.kv td:first-child{color:var(--muted);width:38%}
+.sev{font-size:12px;font-weight:700;text-transform:uppercase;padding:1px 7px;border-radius:999px;border:1px solid currentColor}
+.sev-critical{color:var(--s-failed)}.sev-high{color:var(--s-aborted)}.sev-medium{color:#a16207}.sev-info,.sev-low{color:var(--teal)}.sev-unknown{color:var(--muted)}
+.fix{border-left:3px solid var(--teal);padding-left:10px;margin-top:6px}
+code{font-size:13px;background:rgba(127,127,127,.12);padding:1px 5px;border-radius:4px}
+.chart{width:100%;height:auto;display:block;margin-top:8px}.chart .axis{stroke:var(--muted);stroke-width:1}
+.chart .grid{stroke:var(--line);stroke-width:1}.chart .lbl{fill:var(--muted);font-size:11px}.chart .ttl{fill:var(--fg);font-size:12px;font-weight:600}
+.chart .series{fill:none;stroke:var(--series);stroke-width:2;stroke-linejoin:round}
+.chart .hit{fill:transparent;stroke:none}.chart .hit:hover{fill:var(--series);stroke:var(--card);stroke-width:2}
+.headline{font-size:16px;margin:12px 0 0}
+</style></head><body><main>
+<p class="muted">Chaos experiment report &middot; {{ f.started_at }}</p>
+<h1>{{ f.run_id }} &nbsp;<span class="badge st-{{ f.status }}">{{ f.status }}</span></h1>
+<p class="headline">{{ headline }}</p>
+
+<h2>What was tested</h2>
+<div class="card"><table class="kv">
+<tr><td>Target link</td><td><code>{{ f.target }}</code></td></tr>
+<tr><td>Fault</td><td>{{ f.fault_type }} ({{ f.intensity }})</td></tr>
+<tr><td>Maximum duration</td><td>{{ fmt(f.max_duration_s) }}</td></tr>
+<tr><td>Stop thresholds</td><td>p95 &gt; {{ fmt(f.threshold_p95_ms) }} or error rate &gt; {{ fmt(f.threshold_error_rate) }}</td></tr>
+<tr><td>Why this experiment</td><td>{% for c in f.reason_codes %}<code>{{ c }}</code> {% else %}unknown{% endfor %}</td></tr>
+<tr><td>Planner</td><td>{{ f.planner }} &middot; candidate <code>{{ f.candidate_id }}</code> &middot; rank {{ fmt(f.rank) }} &middot; score {{ fmt(f.score, 2) }}</td></tr>
+</table></div>
+
+<h2>Outcome</h2>
+<div class="card"><table class="kv">
+<tr><td>Status</td><td>{{ f.status }}</td></tr>
+<tr><td>Stop reason</td><td>{{ f.stop_reason }}{% if f.stopped_by %} (by {{ f.stopped_by }}){% endif %}</td></tr>
+<tr><td>Fault active for</td><td>{{ fmt(f.fault_duration_s) }}</td></tr>
+<tr><td>Cleanup verified</td><td>{{ fmt(f.cleanup_verified) }}</td></tr>
+<tr><td>Recovery</td><td>{{ f.recovery_status }}{% if f.recovery_time_s.known %} in {{ fmt(f.recovery_time_s, 1) }}{% endif %}</td></tr>
+{% if f.failure_detail %}<tr><td>Failure detail</td><td>{{ f.failure_detail }}</td></tr>{% endif %}
+</table></div>
+
+<h2>Measurements</h2>
+<div class="card"><table>
+<tr><th></th><th>Baseline</th><th>During fault</th><th>Recovery</th></tr>
+<tr><td>Requests</td>{% for ph in phases %}<td>{{ fmt(f.phases[ph].requests) }}</td>{% endfor %}</tr>
+<tr><td>Errors</td>{% for ph in phases %}<td>{{ fmt(f.phases[ph].errors) }}</td>{% endfor %}</tr>
+<tr><td>Error rate</td>{% for ph in phases %}<td>{{ fmt(f.phases[ph].error_rate) }}</td>{% endfor %}</tr>
+<tr><td>p50 latency (median)</td>{% for ph in phases %}<td>{{ fmt(f.phases[ph].p50_ms, 1) }}</td>{% endfor %}</tr>
+<tr><td>p95 latency (worst)</td>{% for ph in phases %}<td>{{ fmt(f.phases[ph].p95_ms, 1) }}</td>{% endfor %}</tr>
+</table>
+{{ chart | safe }}
+</div>
+
+<h2>Findings <span class="muted" style="font-weight:400;font-size:13px">({{ rules_version }})</span></h2>
+{% for x in findings %}
+<div class="card"><span class="sev sev-{{ x.severity }}">{{ x.severity }}</span> &nbsp;<b>{{ x.title }}</b> <span class="muted">&middot; {{ x.rule_id }}</span>
+<p>{{ x.detail }}</p><p class="fix"><b>Fix:</b> {{ x.fix }}</p></div>
+{% else %}<p class="muted">No rule matched this run.</p>{% endfor %}
+
+<h2>Evidence</h2>
+<div class="card"><table>
+<tr><th>File</th><th>Type</th></tr>
+{% for e in f.evidence %}<tr><td><code>{{ e.path }}</code></td><td>{{ e.type }}</td></tr>{% else %}<tr><td colspan="2" class="muted">No evidence references in result.json</td></tr>{% endfor %}
+</table>
+<details><summary class="muted">Where every number comes from</summary><table>
+{% for name, fact in sources %}<tr><td>{{ name }}</td><td>{{ fmt(fact, 1) }}</td><td class="muted">{{ fact.source }}</td></tr>{% endfor %}
+</table></details></div>
+
+{% if f.problems %}<h2>Data problems</h2><div class="card">{% for p in f.problems %}<p>&#9888; {{ p }}</p>{% endfor %}</div>{% endif %}
+
+<p class="muted" style="margin-top:32px;font-size:13px">Fixed template {{ template_version }} &middot; every value is read from the run records; nothing is generated or estimated. Missing values are shown as "unknown".</p>
+</main></body></html>

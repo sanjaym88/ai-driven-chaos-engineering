@@ -1,0 +1,29 @@
+{
+  "run_id": "run-0002",
+  "status": "aborted",
+  "started_at": "2026-10-09T09:10:00Z",
+  "ended_at": "2026-10-09T09:10:56Z",
+  "fault_started_at": "2026-10-09T09:10:30Z",
+  "fault_ended_at": "2026-10-09T09:10:36Z",
+  "stop_reason": "threshold_breach: p95 2538 ms > 2000 ms",
+  "stopped_by": "watchdog",
+  "cleanup_verified": true,
+  "recovery_result": {
+    "status": "recovered",
+    "recovery_time_s": 6.0
+  },
+  "evidence_refs": [
+    {
+      "type": "journal",
+      "path": "journal.json"
+    },
+    {
+      "type": "metrics",
+      "path": "metrics.jsonl"
+    },
+    {
+      "type": "watchdog_log",
+      "path": "watchdog.log"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "_note": "MOCK Chaos Toolkit journal - real one comes from P3",
+  "experiment": {
+    "title": "reset_peer on frontend->backend"
+  },
+  "status": "failed",
+  "start": "2026-10-09T09:20:00Z",
+  "end": "2026-10-09T09:21:50Z",
+  "run": [],
+  "rollbacks": []
+}

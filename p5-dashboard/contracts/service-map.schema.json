@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "service-map.json",
+  "type": "object",
+  "required": ["services", "edges"],
+  "properties": {
+    "services": {"type": "array", "items": {"type": "object", "required": ["id"]}},
+    "edges": {"type": "array", "items": {"type": "object", "required": ["from", "to"]}},
+    "request_paths": {"type": "array"},
+    "notes": {"type": "array"}
+  }
+}

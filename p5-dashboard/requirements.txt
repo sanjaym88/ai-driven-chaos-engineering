@@ -1,0 +1,7 @@
+streamlit>=1.40
+altair>=5
+pandas>=2
+jinja2>=3.1
+jsonschema>=4.20
+requests>=2.31
+pytest>=8

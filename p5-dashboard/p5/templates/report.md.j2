@@ -1,0 +1,48 @@
+# {{ f.run_id }} — {{ f.status | upper }}
+
+_{{ f.started_at }} · fixed template {{ template_version }} · {{ rules_version }}_
+
+{{ headline }}
+
+## What was tested
+- **Target link:** `{{ f.target }}`
+- **Fault:** {{ f.fault_type }} ({{ f.intensity }})
+- **Maximum duration:** {{ fmt(f.max_duration_s) }}
+- **Stop thresholds:** p95 > {{ fmt(f.threshold_p95_ms) }} or error rate > {{ fmt(f.threshold_error_rate) }}
+- **Why:** {% for c in f.reason_codes %}`{{ c }}` {% else %}unknown{% endfor %}
+- **Planner:** {{ f.planner }} · candidate `{{ f.candidate_id }}` · rank {{ fmt(f.rank) }} · score {{ fmt(f.score, 2) }}
+
+## Outcome
+- **Stop reason:** {{ f.stop_reason }}{% if f.stopped_by %} (by {{ f.stopped_by }}){% endif %}
+- **Fault active for:** {{ fmt(f.fault_duration_s) }}
+- **Cleanup verified:** {{ fmt(f.cleanup_verified) }}
+- **Recovery:** {{ f.recovery_status }}{% if f.recovery_time_s.known %} in {{ fmt(f.recovery_time_s, 1) }}{% endif %}
+{% if f.failure_detail %}- **Failure detail:** {{ f.failure_detail }}
+{% endif %}
+## Measurements
+| | Baseline | During fault | Recovery |
+|---|---|---|---|
+| Requests |{% for ph in phases %} {{ fmt(f.phases[ph].requests) }} |{% endfor %}
+| Errors |{% for ph in phases %} {{ fmt(f.phases[ph].errors) }} |{% endfor %}
+| Error rate |{% for ph in phases %} {{ fmt(f.phases[ph].error_rate) }} |{% endfor %}
+| p50 latency (median) |{% for ph in phases %} {{ fmt(f.phases[ph].p50_ms, 1) }} |{% endfor %}
+| p95 latency (worst) |{% for ph in phases %} {{ fmt(f.phases[ph].p95_ms, 1) }} |{% endfor %}
+
+## Findings
+{% for x in findings %}
+### [{{ x.severity | upper }}] {{ x.title }} (`{{ x.rule_id }}`)
+{{ x.detail }}
+
+**Fix:** {{ x.fix }}
+{% else %}
+No rule matched this run.
+{% endfor %}
+
+## Evidence
+{% for e in f.evidence %}- `{{ e.path }}` ({{ e.type }})
+{% else %}- none listed
+{% endfor %}
+{% if f.problems %}
+## Data problems
+{% for p in f.problems %}- {{ p }}
+{% endfor %}{% endif %}

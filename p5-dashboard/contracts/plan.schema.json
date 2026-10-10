@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Chaos Engineering Experiment Plan",
+  "description": "Validated plan produced by P2 and consumed by the orchestration/execution pipeline.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "candidate_id",
+    "target",
+    "fault_type",
+    "intensity",
+    "max_duration",
+    "stop_thresholds",
+    "reason_codes"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "pattern": "^run-[A-Za-z0-9T:_-]+$",
+      "minLength": 5,
+      "maxLength": 100,
+      "description": "Unique identifier assigned by P5 and shared across all run artifacts."
+    },
+    "candidate_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "target": {
+      "type": "string",
+      "enum": [
+        "podinfo-backend"
+      ],
+      "description": "Must identify a verified dependency target from the service map."
+    },
+    "fault_type": {
+      "type": "string",
+      "enum": [
+        "latency",
+        "timeout",
+        "connection-disabled"
+      ]
+    },
+    "intensity": {
+      "oneOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5000,
+          "description": "Numeric intensity; for latency, measured in milliseconds."
+        },
+        {
+          "type": "string",
+          "enum": [
+            "limited"
+          ],
+          "description": "Named intensity; requires an agreed interpretation in the executor."
+        }
+      ]
+    },
+    "max_duration": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 30,
+      "description": "Maximum fault duration in seconds."
+    },
+    "stop_thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_error_rate",
+        "max_latency_p95_ms",
+        "required_health"
+      ],
+      "properties": {
+        "max_error_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "max_latency_p95_ms": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "required_health": {
+          "type": "string",
+          "const": "healthy"
+        }
+      }
+    },
+    "reason_codes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "APPROVED_TEMPLATE",
+          "MAPPED_DEPENDENCY",
+          "BASELINE_HEALTHY",
+          "BASELINE_FRESH",
+          "LOWER_RISK_PREFERENCE"
+        ]
+      }
+    }
+  }
+}

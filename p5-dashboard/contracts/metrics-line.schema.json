@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "one line of metrics.jsonl",
+  "type": "object",
+  "required": ["run_id", "timestamp", "phase", "request_count", "errors", "latency", "health"],
+  "properties": {
+    "run_id": {"type": "string"},
+    "timestamp": {"type": "string"},
+    "phase": {"enum": ["baseline", "fault", "recovery"]},
+    "request_count": {"type": "integer", "minimum": 0},
+    "errors": {"type": "integer", "minimum": 0},
+    "latency": {"type": ["object", "number", "null"]},
+    "health": {"type": ["object", "null"]}
+  }
+}

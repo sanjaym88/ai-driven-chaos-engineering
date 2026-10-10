@@ -1,0 +1,11 @@
+{
+  "_note": "MOCK Chaos Toolkit journal - real one comes from P3",
+  "experiment": {
+    "title": "latency on frontend->backend"
+  },
+  "status": "blocked",
+  "start": "2026-10-09T09:30:00Z",
+  "end": "2026-10-09T09:30:00Z",
+  "run": [],
+  "rollbacks": []
+}
