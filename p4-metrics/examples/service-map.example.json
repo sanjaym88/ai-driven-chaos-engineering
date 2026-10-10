@@ -1,8 +1,10 @@
 {
   "services": {
     "podinfo-backend": {
-      "url": "http://localhost:9898",
-      "health_check_path": "/healthz",
+      "url": "http://localhost:9898/echo",
+      "method": "POST",
+      "json": {"test": true},
+      "health_check_url": "http://localhost:9898/healthz",
       "dependencies": []
     },
     "podinfo-frontend": {

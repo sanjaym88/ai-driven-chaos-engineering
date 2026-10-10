@@ -10,8 +10,10 @@ class TrafficGenerator:
     """
     Generates steady HTTP traffic. Includes Addons for P1 (Health Checks) and P3 (Watchdog).
     """
-    def __init__(self, target_url: str, health_url: Optional[str] = None, request_timeout: float = 2.0, max_concurrency: int = 10, stop_thresholds: Optional[Dict[str, float]] = None):
+    def __init__(self, target_url: str, health_url: Optional[str] = None, request_timeout: float = 2.0, max_concurrency: int = 10, stop_thresholds: Optional[Dict[str, float]] = None, target_method: str = "GET", target_json: Optional[Dict] = None):
         self.target_url = target_url
+        self.target_method = target_method
+        self.target_json = target_json
         # ADDON FOR P1: Dedicated health check URL
         self.health_url = health_url or target_url 
         self.request_timeout = request_timeout
@@ -19,12 +21,12 @@ class TrafficGenerator:
         self.is_running = False
         self.stop_thresholds = stop_thresholds or {}
 
-    async def _make_request(self, session: aiohttp.ClientSession, url: str) -> tuple[float, bool]:
+    async def _make_request(self, session: aiohttp.ClientSession, url: str, method: str = "GET", json_body: Optional[Dict] = None) -> tuple[float, bool]:
         start = time.perf_counter()
         is_error = False
         try:
             async with self.semaphore:
-                async with session.get(url, timeout=self.request_timeout) as response:
+                async with session.request(method, url, json=json_body, timeout=self.request_timeout) as response:
                     await response.read()
                     if response.status >= 400:
                         is_error = True
@@ -42,15 +44,17 @@ class TrafficGenerator:
         max_lat = self.stop_thresholds.get("max_latency_ms")
         max_err = self.stop_thresholds.get("max_error_rate")
         
-        trip_reason = None
+        trip_reasons = []
         if max_lat and latencies:
             p95_lat = sorted(latencies)[int(len(latencies) * 0.95)]
             if p95_lat > max_lat:
-                trip_reason = f"LATENCY_BREACH_{p95_lat:.1f}ms"
-        elif max_err and error_rate > max_err:
-            trip_reason = f"ERROR_RATE_BREACH_{error_rate:.2f}"
+                trip_reasons.append(f"LATENCY_BREACH_{p95_lat:.1f}ms")
+        
+        if max_err and error_rate > max_err:
+            trip_reasons.append(f"ERROR_RATE_BREACH_{error_rate:.2f}")
             
-        if trip_reason:
+        if trip_reasons:
+            trip_reason = " | ".join(trip_reasons)
             # Emits a signal file that P3's watchdog can tail/watch for zero-latency shutdown
             with open(f"safety-trip-{run_id}.flag", "w") as f:
                 f.write(trip_reason)
@@ -65,9 +69,9 @@ class TrafficGenerator:
                 window_start = datetime.now(timezone.utc)
                 
                 requests_per_second = 10
-                tasks = [self._make_request(session, self.target_url) for _ in range(requests_per_second)]
+                tasks = [self._make_request(session, self.target_url, self.target_method, self.target_json) for _ in range(requests_per_second)]
                 # Addon for P1: explicit health check poll
-                health_task = self._make_request(session, self.health_url)
+                health_task = self._make_request(session, self.health_url, "GET", None)
                 
                 results = await asyncio.gather(*tasks, return_exceptions=True)
                 health_result = await health_task

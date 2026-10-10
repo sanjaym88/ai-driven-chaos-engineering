@@ -35,10 +35,10 @@ def extract_failure_flags(baseline: MetricsWindow, fault: MetricsWindow) -> List
         flags.append("SEVERE_SERVICE_DEGRADATION")
         
     # Latency analysis
-    if base_lat > 0 and fault_lat > (base_lat * 2):
-        flags.append("LATENCY_DOUBLED")
-    elif base_lat > 0 and fault_lat > (base_lat * 5):
+    if base_lat > 0 and fault_lat > (base_lat * 5):
         flags.append("LATENCY_CRITICAL_SPIKE")
+    elif base_lat > 0 and fault_lat > (base_lat * 2):
+        flags.append("LATENCY_DOUBLED")
         
     # Health analysis
     if any(r.health == "unhealthy" for r in fault.records):
@@ -52,6 +52,35 @@ def evaluate_run(run_id: str, baseline: MetricsWindow, fault: MetricsWindow, rec
     """
     is_stale, stale_reason = check_stale_baseline(baseline, fault)
     
+    if not p3_result:
+        return ResultEvaluation(
+            run_id=run_id,
+            status="invalid",
+            stop_reason="Missing P3 result",
+            cleanup_verified=False,
+            recovery_result="unknown",
+            failure_flags=[]
+        )
+        
+    if p3_result.get("run_id") != run_id:
+        return ResultEvaluation(
+            run_id=run_id,
+            status="invalid",
+            stop_reason=f"Run ID mismatch in P3 result: expected {run_id}, got {p3_result.get('run_id')}",
+            cleanup_verified=False,
+            recovery_result="unknown",
+            failure_flags=[]
+        )
+        
+    if "cleanup_verified" not in p3_result or "stop_reason" not in p3_result:
+        return ResultEvaluation(
+            run_id=run_id,
+            status="invalid",
+            stop_reason="Malformed P3 result: missing cleanup_verified or stop_reason",
+            cleanup_verified=False,
+            recovery_result="unknown",
+            failure_flags=[]
+        )
     if is_stale or baseline.is_empty:
         return ResultEvaluation(
             run_id=run_id,
@@ -90,8 +119,8 @@ def evaluate_run(run_id: str, baseline: MetricsWindow, fault: MetricsWindow, rec
     failure_flags = extract_failure_flags(baseline, fault)
     
     # Consume P3's actual cleanup/result record if provided
-    stop_reason = p3_result.get("stop_reason", "MAX_DURATION_REACHED") if p3_result else "MAX_DURATION_REACHED"
-    cleanup_verified = p3_result.get("cleanup_verified", False) if p3_result else True
+    stop_reason = p3_result["stop_reason"]
+    cleanup_verified = p3_result["cleanup_verified"]
             
     return ResultEvaluation(
         run_id=run_id,

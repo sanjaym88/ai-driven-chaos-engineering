@@ -18,8 +18,9 @@ def test_stale_baseline_rejected():
     assert is_stale is True
     assert "exceeds limit" in reason
     
+    p3_result = {"run_id": "r1", "stop_reason": "STOP", "cleanup_verified": True}
     # Evaluation should mark the entire run as invalid
-    result = evaluate_run("r1", windows["baseline"], windows["fault"], windows["recovery"])
+    result = evaluate_run("r1", windows["baseline"], windows["fault"], windows["recovery"], p3_result)
     assert result.status == "invalid"
     assert "exceeds limit" in result.stop_reason
 
@@ -28,7 +29,8 @@ def test_missing_fault_data():
     base = MetricRecord(run_id="r1", timestamp=now, phase="baseline", request_count=100, errors=0, latency=LatencySummary(), health="healthy")
     
     windows = separate_windows([base]) # Missing fault data
-    result = evaluate_run("r1", windows["baseline"], windows["fault"], windows["recovery"])
+    p3_result = {"run_id": "r1", "stop_reason": "STOP", "cleanup_verified": True}
+    result = evaluate_run("r1", windows["baseline"], windows["fault"], windows["recovery"], p3_result)
     
     assert result.status == "invalid"
     assert result.stop_reason == "Missing fault data"

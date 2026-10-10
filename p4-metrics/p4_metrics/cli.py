@@ -24,20 +24,28 @@ def generate_traffic(args):
         
     service_data = service_map.get("services", {}).get(target_service, {})
     target_url = service_data.get("url")
+    target_method = service_data.get("method", "GET")
+    target_json = service_data.get("json", None)
+    health_url_conf = service_data.get("health_check_url")
     health_path = service_data.get("health_check_path", "")
     
     if not target_url:
         raise ValueError(f"Integration Error: Service '{target_service}' not found in {args.service_map}")
         
     # Construct distinct health url for P1 addon
-    health_url = f"{target_url.rstrip('/')}{health_path}" if health_path else target_url
+    if health_url_conf:
+        health_url = health_url_conf
+    else:
+        health_url = f"{target_url.rstrip('/')}{health_path}" if health_path else target_url
         
     recorder = MetricRecorder(args.output)
     generator = TrafficGenerator(
         target_url=target_url, 
         health_url=health_url,
         max_concurrency=args.concurrency,
-        stop_thresholds=stop_thresholds
+        stop_thresholds=stop_thresholds,
+        target_method=target_method,
+        target_json=target_json
     )
     
     print(f"Integration Check: Hitting {target_url} (Health: {health_url}) [Plan: {run_id}]")

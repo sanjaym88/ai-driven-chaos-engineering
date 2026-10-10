@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MetricRecord",
+  "description": "Window-based metrics format consumed by P3 and P5.",
+  "type": "object",
+  "properties": {
+    "run_id": {"type": "string"},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "phase": {"type": "string", "enum": ["baseline", "fault", "recovery"]},
+    "request_count": {"type": "integer"},
+    "errors": {"type": "integer"},
+    "latency": {
+      "type": "object",
+      "properties": {
+        "unit": {"type": "string", "enum": ["ms"]},
+        "values": {"type": "array", "items": {"type": "number"}},
+        "p50": {"type": ["number", "null"]},
+        "p95": {"type": ["number", "null"]},
+        "p99": {"type": ["number", "null"]}
+      },
+      "required": ["unit", "values"]
+    },
+    "health": {"type": "string", "enum": ["healthy", "degraded", "unhealthy", "unknown"]}
+  },
+  "required": ["run_id", "timestamp", "phase", "request_count", "errors", "latency", "health"]
+}

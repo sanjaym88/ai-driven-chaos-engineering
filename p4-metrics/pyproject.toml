@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "p4-metrics"
+version = "0.1.0"
+description = "P4 Metrics Evaluation Module"
+dependencies = [
+    "pydantic",
+    "aiohttp"
+]
+
+[project.scripts]
+p4-metrics = "p4_metrics.cli:main"
