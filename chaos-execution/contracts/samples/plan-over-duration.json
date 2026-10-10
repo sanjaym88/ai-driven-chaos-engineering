@@ -1,0 +1,10 @@
+{
+  "run_id": "run-long",
+  "candidate_id": "podinfo-backend-latency-500ms",
+  "target": "podinfo-backend",
+  "fault_type": "latency",
+  "intensity": 500,
+  "max_duration": 600,
+  "stop_thresholds": {"error_rate": 0.2, "p95_latency_ms": 3000},
+  "reason_codes": ["SINGLE_DEPENDENCY_LINK", "FRONTEND_ECHO_PATH"]
+}

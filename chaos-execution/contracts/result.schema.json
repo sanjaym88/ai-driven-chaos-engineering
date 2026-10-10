@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "result.json (written by P3, read by P4/P5)",
+  "type": "object",
+  "required": ["run_id", "status", "stop_reason", "cleanup_verified", "recovery_result", "evidence_refs"],
+  "properties": {
+    "run_id": {"type": "string"},
+    "status": {"enum": ["completed", "aborted", "failed", "blocked"]},
+    "stop_reason": {"type": "string"},
+    "cleanup_verified": {"type": "boolean"},
+    "recovery_result": {"enum": ["recovered", "not_recovered", "not_applicable"]},
+    "evidence_refs": {"type": "array", "items": {"type": "string"}},
+    "block_reasons": {"type": "array", "items": {"type": "string"}},
+    "all_triggers": {"type": "array", "items": {"type": "string"}, "description": "every stop condition active at stop time; first = primary stop_reason"},
+    "errors": {"type": "array", "items": {"type": "string"}, "description": "cleanup / toolkit errors seen during the run"},
+    "plan": {"type": "object", "description": "snapshot of the validated plan that was executed"},
+    "timeline": {
+      "type": "object",
+      "description": "epoch seconds: armed_at, injected_at, removed_at, finished_at; fault_duration_s. P4 uses these to split before / during / after.",
+      "properties": {"armed_at": {"type": ["number", "null"]}, "injected_at": {"type": ["number", "null"]},
+                     "removed_at": {"type": ["number", "null"]}, "finished_at": {"type": "number"},
+                     "fault_duration_s": {"type": ["number", "null"]}}
+    },
+    "written_by": {"enum": ["runner", "watchdog"]}
+  },
+  "additionalProperties": true
+}

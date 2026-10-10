@@ -1,0 +1,41 @@
+{
+  "version": "1.0.0",
+  "title": "Podinfo backend link: bounded network fault via Toxiproxy",
+  "description": "Frontend stays healthy while a fault (latency, timeout, reset, ...) is applied to the podinfo-backend dependency link. Plan values come from runs/<run_id>/run.json (validated); this file only receives the run id.",
+  "configuration": {
+    "run_id": {"type": "env", "key": "CHAOS_RUN_ID"}
+  },
+  "steady-state-hypothesis": {
+    "title": "Frontend is healthy",
+    "probes": [
+      {
+        "type": "probe",
+        "name": "frontend-healthy",
+        "tolerance": true,
+        "provider": {"type": "python", "module": "chaos.probes", "func": "frontend_healthy"}
+      }
+    ]
+  },
+  "method": [
+    {
+      "type": "action",
+      "name": "inject-fault",
+      "provider": {"type": "python", "module": "chaos.actions", "func": "inject_fault",
+                   "arguments": {"run_id": "${run_id}"}}
+    },
+    {
+      "type": "action",
+      "name": "hold-fault",
+      "provider": {"type": "python", "module": "chaos.actions", "func": "hold_fault",
+                   "arguments": {"run_id": "${run_id}"}}
+    }
+  ],
+  "rollbacks": [
+    {
+      "type": "action",
+      "name": "remove-fault",
+      "provider": {"type": "python", "module": "chaos.actions", "func": "remove_fault",
+                   "arguments": {"run_id": "${run_id}"}}
+    }
+  ]
+}

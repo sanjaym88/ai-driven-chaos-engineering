@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "experiment-plan.json (from P2, validated by P3)",
+  "type": "object",
+  "required": ["run_id", "candidate_id", "target", "fault_type", "intensity", "max_duration", "stop_thresholds", "reason_codes"],
+  "properties": {
+    "run_id": {"type": "string", "pattern": "^[A-Za-z0-9_-]{1,40}$"},
+    "candidate_id": {"type": "string"},
+    "target": {"type": "string", "description": "Toxiproxy proxy name / dependency link, e.g. podinfo-backend"},
+    "fault_type": {"type": "string"},
+    "intensity": {"type": "number", "description": "latency: milliseconds (ASSUMED unit, confirm at M0)"},
+    "max_duration": {"type": "number", "description": "seconds"},
+    "stop_thresholds": {
+      "type": "object",
+      "description": "P2 names: max_error_rate (fraction), max_latency_p95_ms, required_health ('healthy'). Short names error_rate / p95_latency_ms also accepted.",
+      "properties": {"max_error_rate": {"type": "number"}, "max_latency_p95_ms": {"type": "number"},
+                     "required_health": {"type": "string"},
+                     "error_rate": {"type": "number"}, "p95_latency_ms": {"type": "number"}},
+      "additionalProperties": false
+    },
+    "reason_codes": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": true
+}

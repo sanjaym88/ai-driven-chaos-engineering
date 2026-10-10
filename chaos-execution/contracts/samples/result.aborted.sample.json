@@ -1,0 +1,40 @@
+{
+  "run_id": "full1-009",
+  "status": "aborted",
+  "stop_reason": "threshold_breach:error_rate",
+  "cleanup_verified": true,
+  "recovery_result": "recovered",
+  "evidence_refs": [
+    "campaigns\\full1\\runs\\full1-009\\journal.json",
+    "campaigns\\full1\\runs\\full1-009\\run.json",
+    "campaigns\\full1\\runs\\full1-009\\watchdog.json"
+  ],
+  "plan": {
+    "run_id": "full1-009",
+    "candidate_id": "timeout-300-r1",
+    "target": "podinfo-backend",
+    "fault_type": "timeout",
+    "intensity": 300,
+    "max_duration": 5,
+    "stop_thresholds": {
+      "max_error_rate": 0.5,
+      "max_latency_p95_ms": 5000
+    },
+    "reason_codes": [
+      "CAMPAIGN",
+      "MATRIX"
+    ]
+  },
+  "all_triggers": [
+    "threshold_breach:error_rate"
+  ],
+  "errors": [],
+  "timeline": {
+    "armed_at": 1791621867.794394,
+    "injected_at": 1791621868.4468656,
+    "removed_at": 1791621868.953006,
+    "finished_at": 1791621869.1779284,
+    "fault_duration_s": 0.51
+  },
+  "written_by": "runner"
+}

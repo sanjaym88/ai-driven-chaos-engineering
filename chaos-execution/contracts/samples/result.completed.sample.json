@@ -1,0 +1,39 @@
+{
+  "run_id": "full1-004",
+  "status": "completed",
+  "stop_reason": "duration_expired",
+  "cleanup_verified": true,
+  "recovery_result": "recovered",
+  "evidence_refs": [
+    "campaigns\\full1\\runs\\full1-004\\journal.json",
+    "campaigns\\full1\\runs\\full1-004\\run.json"
+  ],
+  "plan": {
+    "run_id": "full1-004",
+    "candidate_id": "latency-400-r1",
+    "target": "podinfo-backend",
+    "fault_type": "latency",
+    "intensity": 400,
+    "max_duration": 5,
+    "stop_thresholds": {
+      "max_error_rate": 0.5,
+      "max_latency_p95_ms": 5000
+    },
+    "reason_codes": [
+      "CAMPAIGN",
+      "MATRIX"
+    ]
+  },
+  "all_triggers": [
+    "duration_expired"
+  ],
+  "errors": [],
+  "timeline": {
+    "armed_at": 1791621792.3163667,
+    "injected_at": 1791621792.987474,
+    "removed_at": 1791621798.0851758,
+    "finished_at": 1791621798.2148771,
+    "fault_duration_s": 5.1
+  },
+  "written_by": "runner"
+}

@@ -1,0 +1,2 @@
+{"run_id":"run-001","timestamp":"2026-10-10T12:00:00Z","phase":"baseline","request_count":25,"errors":0,"latency":{"p95":45},"health":"ok"}
+{"run_id":"run-001","timestamp":"2026-10-10T12:00:05Z","phase":"fault","request_count":10,"errors":0,"latency":{"p95":560},"health":"ok"}

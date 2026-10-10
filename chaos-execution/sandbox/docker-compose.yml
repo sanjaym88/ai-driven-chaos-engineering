@@ -1,0 +1,43 @@
+services:
+  backend:
+    image: ghcr.io/stefanprodan/podinfo:6.15.0
+    command: ["./podinfo", "--port=9898", "--port-metrics=9797", "--grpc-port=9999"]
+    expose:
+      - "9898"
+      - "9797"
+    healthcheck:
+      test: ["CMD", "podcli", "check", "http", "localhost:9898/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.12.0
+    ports:
+      - "127.0.0.1:8474:8474"
+    expose:
+      - "8666"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  frontend:
+    image: ghcr.io/stefanprodan/podinfo:6.15.0
+    command:
+      - ./podinfo
+      - --port=9898
+      - --port-metrics=9797
+      - --grpc-port=9999
+      - --backend-url=http://toxiproxy:8666/echo
+    ports:
+      - "127.0.0.1:9898:9898"
+    healthcheck:
+      test: ["CMD", "podcli", "check", "http", "localhost:9898/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      backend:
+        condition: service_healthy
+      toxiproxy:
+        condition: service_started
