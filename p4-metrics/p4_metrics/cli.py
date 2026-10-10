@@ -76,7 +76,9 @@ def generate_traffic(args):
         max_concurrency=args.concurrency,
         stop_thresholds=stop_thresholds,
         request_method=request_method,
-        request_body=request_body
+        request_body=request_body,
+        safety_flag_dir=str(Path(args.output).resolve().parent),
+        p3_run_state_path=args.p3_run_state,
     )
     
     print(f"Integration Check: {request_method} {target_url} (Health: GET {health_url}) [Plan: {run_id}]")
@@ -132,6 +134,7 @@ def main():
     traffic_parser.add_argument("--duration", type=int, default=10, help="Duration for non-fault phases")
     traffic_parser.add_argument("--concurrency", type=int, default=10, help="Max requests concurrency")
     traffic_parser.add_argument("--output", default="metrics.jsonl", help="Output JSONL file")
+    traffic_parser.add_argument("--p3-run-state", help="For fault phase, stop when this P3 run.json reaches stopped/cleanup_failed")
     
     eval_parser = subparsers.add_parser("evaluate", help="Evaluate run metrics for reporting")
     eval_parser.add_argument("--experiment-plan", default="contracts/experiment-plan.example.json", help="P3 Experiment Plan")

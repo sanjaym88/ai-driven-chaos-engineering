@@ -28,6 +28,41 @@ def test_error_threshold_checked_when_latency_threshold_present(tmp_path, monkey
     assert "ERROR_RATE_BREACH" in (tmp_path / "safety-trip-errors.flag").read_text()
 
 
+def test_safety_trip_is_written_beside_shared_metrics_file(tmp_path):
+    output_dir = tmp_path / "chaos-execution" / "runs"
+    generator = TrafficGenerator(
+        "http://example.test/echo",
+        stop_thresholds={"max_error_rate": 0.1},
+        safety_flag_dir=str(output_dir),
+    )
+    generator._check_safety_limits([10], 0.5, "shared-path")
+    assert (output_dir / "safety-trip-shared-path.flag").read_text().startswith("ERROR_RATE_BREACH")
+
+
+def test_fault_sampler_detects_terminal_p3_run_state(tmp_path):
+    state_path = tmp_path / "run.json"
+    state_path.write_text(json.dumps({"state": "stopped"}), encoding="utf-8")
+    generator = TrafficGenerator("http://example.test/echo", p3_run_state_path=str(state_path))
+    assert generator._p3_run_finished()
+
+
+def test_fault_phase_exits_immediately_after_p3_terminal_state(tmp_path):
+    import time
+
+    state_path = tmp_path / "run.json"
+    state_path.write_text(json.dumps({"state": "cleanup_failed"}), encoding="utf-8")
+    records = []
+    generator = TrafficGenerator(
+        "http://127.0.0.1:1/echo",
+        p3_run_state_path=str(state_path),
+    )
+
+    started = time.monotonic()
+    asyncio.run(generator.run("early-stop", "fault", 30, records.append))
+    assert time.monotonic() - started < 1
+    assert records and all(record.request_count == 0 for record in records)
+
+
 def test_p1_service_map_resolves_post_echo_through_frontend():
     service_map = json.loads((Path(__file__).parents[1] / "examples" / "service-map.example.json").read_text())
     plan = {"target": "podinfo-backend"}

@@ -1,5 +1,9 @@
 """Deterministic candidate ranking for P2: Experiment Planner."""
 
+from math import isfinite
+
+from planner.schemas import validate_inputs
+
 FAULT_PRIORITY = {
     "latency": 30,
     "timeout": 20,
@@ -9,6 +13,15 @@ FAULT_PRIORITY = {
 }
 
 DEFAULT_DURATION_SECONDS = 5
+
+
+def _finite_number(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        return isfinite(value)
+    except OverflowError:
+        return False
 
 
 def _mapped_targets(service_map):
@@ -91,8 +104,7 @@ def _choose_intensity(template):
             return None
 
         if any(
-            not isinstance(value, (int, float))
-            or isinstance(value, bool)
+            not _finite_number(value)
             or value < 0
             for value in values
         ):
@@ -128,8 +140,7 @@ def _build_candidate(template, mapped_targets):
         return None, "UNSUPPORTED_FAULT_TYPE"
 
     if (
-        not isinstance(max_duration, (int, float))
-        or isinstance(max_duration, bool)
+        not _finite_number(max_duration)
         or max_duration <= 0
     ):
         return None, "INVALID_DURATION"
@@ -173,6 +184,7 @@ def rank_candidates(
     Returns:
         (ranked_candidates, rejected_candidates)
     """
+    validate_inputs(service_map, baseline, fault_templates)
     _validate_baseline(
         baseline,
         baseline_age_seconds,

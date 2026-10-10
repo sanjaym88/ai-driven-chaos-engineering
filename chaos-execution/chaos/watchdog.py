@@ -7,6 +7,7 @@ records the outcome. Slack/report problems can never reach this code path.
 """
 import threading
 import time
+from pathlib import Path
 
 from . import probes
 from .config import load_safety, now, read_json, runs_dir, write_json
@@ -61,6 +62,17 @@ def stop_reasons(run: dict, rd, safety: dict, t: float) -> list:
     hb = read_json(rd / "heartbeat", {}).get("t", run.get("started_at", t))
     if t - hb > safety["watchdog"]["runner_heartbeat_timeout_s"]:
         reasons.append("runner_heartbeat_lost")
+    # P4 writes this signal beside the shared metrics.jsonl file. Reading the
+    # same configured path lets the watchdog stop the fault even when the
+    # metrics threshold aggregation has not flushed its next window yet.
+    metrics_path = Path(safety["sandbox"]["metrics_path"])
+    trip_flag = metrics_path.parent / f"safety-trip-{run['plan']['run_id']}.flag"
+    if trip_flag.exists():
+        try:
+            detail = trip_flag.read_text(encoding="utf8").strip()
+        except OSError:
+            detail = ""
+        reasons.append(f"p4_safety_trip:{detail}" if detail else "p4_safety_trip")
     reasons += threshold_breaches(run["plan"]["run_id"], run["plan"]["stop_thresholds"], safety, t)
     return reasons
 
