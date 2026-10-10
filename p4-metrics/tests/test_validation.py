@@ -23,10 +23,9 @@ def test_validate_run_id_consistency():
         health="healthy"
     )
     
-    # Validation should keep record1 and drop record2
-    valid = validate_run_id_consistency([record1, record2], "run-001")
-    assert len(valid) == 1
-    assert valid[0].run_id == "run-001"
+    # Mixed runs are rejected instead of silently dropping evidence.
+    with pytest.raises(ValueError, match="other than"):
+        validate_run_id_consistency([record1, record2], "run-001")
 
     # Validation should raise a ValueError if no records match
     with pytest.raises(ValueError):

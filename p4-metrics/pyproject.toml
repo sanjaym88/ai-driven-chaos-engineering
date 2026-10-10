@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bosch-chaos-p4-metrics"
+version = "0.1.0"
+description = "Bounded HTTP traffic measurements and deterministic chaos-run evaluation"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "aiohttp>=3.9,<4",
+  "pydantic>=2.0,<3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10"]
+
+[project.scripts]
+p4-metrics = "p4_metrics.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["p4_metrics*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

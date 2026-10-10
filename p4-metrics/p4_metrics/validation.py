@@ -23,19 +23,11 @@ def validate_run_id_consistency(records: List[MetricRecord], expected_run_id: st
     Filters out mismatched records and returns only valid ones, or raises an error depending on team policy.
     The README states: "A mismatched run_id is not merged into a run."
     """
-    valid_records = []
-    mismatched = 0
-    
-    for record in records:
-        if record.run_id == expected_run_id:
-            valid_records.append(record)
-        else:
-            mismatched += 1
-            
-    if mismatched > 0:
-        print(f"Warning: Dropped {mismatched} metrics belonging to a different run_id.")
-            
-    if len(valid_records) == 0 and len(records) > 0:
-        raise ValueError(f"No metrics matched the expected run_id '{expected_run_id}'.")
-        
-    return valid_records
+    mismatched = sorted({record.run_id for record in records if record.run_id != expected_run_id})
+    if mismatched:
+        raise ValueError(
+            f"Metrics contain run_id values other than '{expected_run_id}': {', '.join(mismatched)}"
+        )
+    if not records:
+        raise ValueError("Metrics file contains no records.")
+    return records
