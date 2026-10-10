@@ -43,8 +43,10 @@ class TrafficGenerator:
         max_err = self.stop_thresholds.get("max_error_rate")
         
         trip_reason = None
-        if max_lat and latencies and statistics.mean(latencies) > max_lat:
-            trip_reason = f"LATENCY_BREACH_{statistics.mean(latencies):.1f}ms"
+        if max_lat and latencies:
+            p95_lat = sorted(latencies)[int(len(latencies) * 0.95)]
+            if p95_lat > max_lat:
+                trip_reason = f"LATENCY_BREACH_{p95_lat:.1f}ms"
         elif max_err and error_rate > max_err:
             trip_reason = f"ERROR_RATE_BREACH_{error_rate:.2f}"
             
@@ -82,11 +84,11 @@ class TrafficGenerator:
                             errors += 1
                             
                 # ADDON FOR P5: Percentile computation
-                p50, p90, p99 = None, None, None
+                p50, p95, p99 = None, None, None
                 if latencies:
                     s_lat = sorted(latencies)
                     p50 = s_lat[int(len(s_lat) * 0.5)]
-                    p90 = s_lat[int(len(s_lat) * 0.9)]
+                    p95 = s_lat[int(len(s_lat) * 0.95)]
                     p99 = s_lat[int(len(s_lat) * 0.99)]
                     
                 is_health_error = health_result[1] if not isinstance(health_result, Exception) else True
@@ -104,7 +106,7 @@ class TrafficGenerator:
                     phase=phase,
                     request_count=len(tasks),
                     errors=errors,
-                    latency=LatencySummary(unit="ms", values=latencies, p50=p50, p90=p90, p99=p99),
+                    latency=LatencySummary(unit="ms", values=latencies, p50=p50, p95=p95, p99=p99),
                     health=health_status
                 )
                 

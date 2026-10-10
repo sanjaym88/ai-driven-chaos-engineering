@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict, Optional
 from .models import ResultEvaluation
 from .windows import MetricsWindow, check_stale_baseline
 
@@ -46,7 +46,7 @@ def extract_failure_flags(baseline: MetricsWindow, fault: MetricsWindow) -> List
         
     return flags
 
-def evaluate_run(run_id: str, baseline: MetricsWindow, fault: MetricsWindow, recovery: MetricsWindow) -> ResultEvaluation:
+def evaluate_run(run_id: str, baseline: MetricsWindow, fault: MetricsWindow, recovery: MetricsWindow, p3_result: Optional[Dict] = None) -> ResultEvaluation:
     """
     Performs deterministic evaluation summary for the entire run.
     """
@@ -78,19 +78,26 @@ def evaluate_run(run_id: str, baseline: MetricsWindow, fault: MetricsWindow, rec
     else:
         base_err = aggregate_error_rate(baseline)
         rec_err = aggregate_error_rate(recovery)
-        # If error rate returns to near-baseline levels, mark successful
-        if rec_err <= base_err + 0.05:
+        base_lat = aggregate_latency(baseline)
+        rec_lat = aggregate_latency(recovery)
+        
+        # If error rate and latency return to near-baseline levels, mark successful
+        if rec_err <= base_err + 0.05 and rec_lat <= base_lat * 1.5:
             recovery_result = "success"
         else:
             recovery_result = "failed"
             
     failure_flags = extract_failure_flags(baseline, fault)
+    
+    # Consume P3's actual cleanup/result record if provided
+    stop_reason = p3_result.get("stop_reason", "MAX_DURATION_REACHED") if p3_result else "MAX_DURATION_REACHED"
+    cleanup_verified = p3_result.get("cleanup_verified", False) if p3_result else True
             
     return ResultEvaluation(
         run_id=run_id,
         status="valid",
-        stop_reason="MAX_DURATION_REACHED",  # In reality, read this from P3's run result
-        cleanup_verified=True,  
+        stop_reason=stop_reason,
+        cleanup_verified=cleanup_verified,  
         recovery_result=recovery_result,
         failure_flags=failure_flags
     )
