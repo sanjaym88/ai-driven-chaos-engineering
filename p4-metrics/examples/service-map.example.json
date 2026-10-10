@@ -1,0 +1,17 @@
+{
+  "services": {
+    "podinfo-backend": {
+      "url": "http://localhost:9898",
+      "health_check_path": "/healthz",
+      "dependencies": []
+    },
+    "podinfo-frontend": {
+      "url": "http://localhost:9899",
+      "health_check_path": "/healthz",
+      "dependencies": ["podinfo-backend"]
+    }
+  },
+  "metadata": {
+    "verified_at": "2026-10-10T10:00:00Z"
+  }
+}

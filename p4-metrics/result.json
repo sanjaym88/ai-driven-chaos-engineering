@@ -1,0 +1,12 @@
+{
+  "run_id": "demo-run-001",
+  "status": "valid",
+  "stop_reason": "MAX_DURATION_REACHED",
+  "cleanup_verified": true,
+  "recovery_result": "success",
+  "failure_flags": [
+    "ERROR_RATE_SPIKE",
+    "LATENCY_DOUBLED"
+  ],
+  "evidence_refs": []
+}
