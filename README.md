@@ -1,5 +1,7 @@
 # AI-driven chaos engineering
 
+**P5: start with the [handover and execution runbook](P5-HANDOVER.md).** It contains shared-environment setup, exact commands, contracts, remaining hackathon work and acceptance checks. P1–P4 integration is implemented on this branch; P5 is not yet complete. Tests cannot guarantee freedom from future crashes.
+
 This repository runs a bounded network-fault experiment against the Podinfo sandbox. P1 supplies a verified service map, P2 chooses one deterministic candidate from a live baseline, P3 validates and injects one Toxiproxy fault with an independent cleanup watchdog, and P4 records/evaluates the baseline, fault, and recovery phases. P5 can use P3's run/event JSONL and P4's metrics/evaluation JSON as dashboard inputs.
 
 ## Quick start (Windows / Docker Desktop)

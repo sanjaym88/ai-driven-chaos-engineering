@@ -73,7 +73,11 @@ def stop_reasons(run: dict, rd, safety: dict, t: float) -> list:
         except OSError:
             detail = ""
         reasons.append(f"p4_safety_trip:{detail}" if detail else "p4_safety_trip")
-    reasons += threshold_breaches(run["plan"]["run_id"], run["plan"]["stop_thresholds"], safety, t)
+    try:
+        reasons += threshold_breaches(run["plan"]["run_id"], run["plan"]["stop_thresholds"], safety, t)
+    except (TypeError, ValueError, KeyError, OSError):
+        # Broken telemetry must not prevent deadline/manual/crash cleanup.
+        reasons.append("metrics_unreadable")
     return reasons
 
 

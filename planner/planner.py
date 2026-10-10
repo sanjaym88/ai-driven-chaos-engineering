@@ -122,6 +122,9 @@ def main():
     )
     args = parser.parse_args()
 
+    # A failed invocation must never leave an older executable plan behind.
+    (ROOT / "experiment-plan.json").unlink(missing_ok=True)
+
     service_map = json.loads(Path(args.service_map).read_text(encoding="utf-8"))
     fault_templates = json.loads(Path(args.fault_templates).read_text(encoding="utf-8"))
     baseline = (
@@ -133,15 +136,15 @@ def main():
     observed_at = baseline.get("observed_at") or baseline.get("captured_at")
     if not observed_at:
         print("\nPlanning blocked: baseline has no observed_at/captured_at timestamp.")
-        return
+        raise SystemExit(1)
     try:
         observed = datetime.fromisoformat(str(observed_at).replace("Z", "+00:00"))
         if observed.tzinfo is None:
             observed = observed.replace(tzinfo=timezone.utc)
-        baseline_age_seconds = max(0.0, (datetime.now(timezone.utc) - observed).total_seconds())
+        baseline_age_seconds = (datetime.now(timezone.utc) - observed).total_seconds()
     except ValueError:
         print("\nPlanning blocked: baseline timestamp is invalid.")
-        return
+        raise SystemExit(1)
 
     print("\n=== P2 Experiment Planner ===")
     print("Service map status:", service_map.get("verification_status"))
@@ -175,7 +178,7 @@ def main():
         if not ranked:
             print("\nNo valid experiment candidates found.")
             print("No experiment plan generated.")
-            return
+            raise SystemExit(1)
 
         print("\nRanked candidates:")
         for position, candidate in enumerate(ranked, start=1):
@@ -198,6 +201,7 @@ def main():
 
     except (ValueError, TypeError, KeyError, RuntimeError, OSError) as exc:
         print(f"\nPlanning blocked: {exc}")
+        raise SystemExit(1) from exc
 
 
 if __name__ == "__main__":

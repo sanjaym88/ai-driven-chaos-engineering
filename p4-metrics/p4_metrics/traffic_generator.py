@@ -12,6 +12,8 @@ class TrafficGenerator:
     Generates steady HTTP traffic. Includes Addons for P1 (Health Checks) and P3 (Watchdog).
     """
     def __init__(self, target_url: str, health_url: Optional[str] = None, request_timeout: float = 2.0, max_concurrency: int = 10, stop_thresholds: Optional[Dict[str, float]] = None, request_method: str = "GET", request_body: Optional[Any] = None, safety_flag_dir: Optional[str] = None, p3_run_state_path: Optional[str] = None):
+        if max_concurrency <= 0 or request_timeout <= 0:
+            raise ValueError("Concurrency and request timeout must be positive")
         self.target_url = target_url
         self.health_url = health_url or target_url 
         self.request_timeout = request_timeout
@@ -69,6 +71,17 @@ class TrafficGenerator:
             print(f"SAFETY TRIP SIGNAL FOR P3: {';'.join(trip_reasons)}")
 
     async def run(self, run_id: str, phase: str, duration_sec: int, record_callback: Callable[[MetricRecord], None]):
+        if duration_sec <= 0:
+            raise ValueError("Traffic duration must be positive")
+        if phase == "fault" and self.p3_run_state_path is not None:
+            # Do not spend the fault duration measuring healthy pre-injection traffic.
+            wait_until = time.monotonic() + 120
+            while self._p3_state() != "injected":
+                if self._p3_run_finished() or self.p3_run_state_path.with_name("result.json").exists():
+                    return
+                if time.monotonic() >= wait_until:
+                    raise TimeoutError("P3 did not inject within 120 seconds; no fault samples recorded")
+                await asyncio.sleep(0.05)
         self.is_running = True
         start = time.monotonic()
         stop_at = start + duration_sec
@@ -181,12 +194,15 @@ class TrafficGenerator:
                 # boundaries close to their configured cadence.
                 await asyncio.sleep(0.01)
 
-    def _p3_run_finished(self) -> bool:
+    def _p3_state(self):
         if self.p3_run_state_path is None:
-            return False
+            return None
         try:
             import json
             state = json.loads(self.p3_run_state_path.read_text(encoding="utf-8")).get("state")
         except (OSError, ValueError, AttributeError):
-            return False
-        return state in {"stopped", "cleanup_failed"}
+            return None
+        return state
+
+    def _p3_run_finished(self) -> bool:
+        return self._p3_state() in {"stopped", "cleanup_failed"}

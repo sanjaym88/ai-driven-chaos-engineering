@@ -9,13 +9,13 @@ def good_p3(run_id="r1", cleanup_verified=True):
 def test_successful_evaluation():
     now = datetime.now(timezone.utc)
     # 0% error rate
-    base = MetricRecord(run_id="r1", timestamp=now, phase="baseline", request_count=100, errors=0, latency=LatencySummary(), health="healthy")
+    base = MetricRecord(run_id="r1", timestamp=now, phase="baseline", request_count=100, errors=0, latency=LatencySummary(values=[10]), health="healthy")
     
     # 50% error rate
-    fault = MetricRecord(run_id="r1", timestamp=now + timedelta(seconds=10), phase="fault", request_count=100, errors=50, latency=LatencySummary(), health="degraded")
+    fault = MetricRecord(run_id="r1", timestamp=now + timedelta(seconds=10), phase="fault", request_count=100, errors=50, latency=LatencySummary(values=[10]), health="degraded")
     
     # 1% error rate (Near baseline, indicates successful recovery)
-    recovery = MetricRecord(run_id="r1", timestamp=now + timedelta(seconds=20), phase="recovery", request_count=100, errors=1, latency=LatencySummary(), health="healthy")
+    recovery = MetricRecord(run_id="r1", timestamp=now + timedelta(seconds=20), phase="recovery", request_count=100, errors=1, latency=LatencySummary(values=[10]), health="healthy")
     
     windows = separate_windows([base, fault, recovery])
     result = evaluate_run("r1", windows["baseline"], windows["fault"], windows["recovery"], good_p3())
@@ -25,11 +25,11 @@ def test_successful_evaluation():
 
 def test_incomplete_recovery():
     now = datetime.now(timezone.utc)
-    base = MetricRecord(run_id="r1", timestamp=now, phase="baseline", request_count=100, errors=0, latency=LatencySummary(), health="healthy")
-    fault = MetricRecord(run_id="r1", timestamp=now + timedelta(seconds=10), phase="fault", request_count=100, errors=50, latency=LatencySummary(), health="degraded")
+    base = MetricRecord(run_id="r1", timestamp=now, phase="baseline", request_count=100, errors=0, latency=LatencySummary(values=[10]), health="healthy")
+    fault = MetricRecord(run_id="r1", timestamp=now + timedelta(seconds=10), phase="fault", request_count=100, errors=50, latency=LatencySummary(values=[10]), health="degraded")
     
     # High error rate remains in recovery phase
-    recovery = MetricRecord(run_id="r1", timestamp=now + timedelta(seconds=20), phase="recovery", request_count=100, errors=45, latency=LatencySummary(), health="unhealthy")
+    recovery = MetricRecord(run_id="r1", timestamp=now + timedelta(seconds=20), phase="recovery", request_count=100, errors=45, latency=LatencySummary(values=[10]), health="unhealthy")
     
     windows = separate_windows([base, fault, recovery])
     result = evaluate_run("r1", windows["baseline"], windows["fault"], windows["recovery"], good_p3())
@@ -86,3 +86,33 @@ def test_latency_spikes_classified_by_p95_severity():
     assert "LATENCY_DOUBLED" in extract_failure_flags(windows["baseline"], windows["fault"])
     critical_windows = separate_windows([baseline, critical])
     assert "LATENCY_CRITICAL_SPIKE" in extract_failure_flags(critical_windows["baseline"], critical_windows["fault"])
+
+
+def test_empty_latency_or_zero_requests_cannot_prove_recovery():
+    now = datetime.now(timezone.utc)
+    for count, values, health, expected in [(0, [], "healthy", "incomplete"), (10, [], "healthy", "incomplete"), (10, [10], "unhealthy", "failed")]:
+        rows = [MetricRecord(run_id="r1", timestamp=now + timedelta(seconds=i), phase=phase,
+            request_count=10 if i < 2 else count, errors=0,
+            latency=LatencySummary(values=[10] if i < 2 else values), health="healthy" if i < 2 else health)
+            for i, phase in enumerate(("baseline", "fault", "recovery"))]
+        w = separate_windows(rows)
+        result = evaluate_run("r1", w["baseline"], w["fault"], w["recovery"], good_p3())
+        assert result.recovery_result == expected
+
+
+def test_cli_evaluates_one_run_from_shared_multi_run_feed(tmp_path):
+    import json
+    from types import SimpleNamespace
+    from p4_metrics.cli import evaluate_metrics
+    now = datetime.now(timezone.utc)
+    records = [MetricRecord(run_id=rid, timestamp=now + timedelta(seconds=i), phase=phase,
+        request_count=10, errors=0, latency=LatencySummary(values=[10]), health="healthy")
+        for rid in ("old-run", "r1") for i, phase in enumerate(("baseline", "fault", "recovery"))]
+    metrics = tmp_path / "metrics.jsonl"
+    metrics.write_text("\n".join(r.model_dump_json() for r in records))
+    plan, p3, output = (tmp_path / name for name in ("plan.json", "p3.json", "out.json"))
+    plan.write_text(json.dumps({"run_id": "r1"}))
+    p3.write_text(json.dumps(good_p3()))
+    evaluate_metrics(SimpleNamespace(experiment_plan=plan, metrics_file=metrics, p3_result=p3, output=output))
+    result = json.loads(output.read_text())
+    assert result["run_id"] == "r1" and result["status"] == "valid"

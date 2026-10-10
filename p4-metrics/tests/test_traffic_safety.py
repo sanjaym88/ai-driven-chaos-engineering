@@ -60,7 +60,7 @@ def test_fault_phase_exits_immediately_after_p3_terminal_state(tmp_path):
     started = time.monotonic()
     asyncio.run(generator.run("early-stop", "fault", 30, records.append))
     assert time.monotonic() - started < 1
-    assert records and all(record.request_count == 0 for record in records)
+    assert records == []
 
 
 def test_p1_service_map_resolves_post_echo_through_frontend():
@@ -151,3 +151,28 @@ def test_metric_record_json_has_http_observation_context():
     assert saved["status_codes"] == {"200": 9, "500": 1}
     assert saved["request_method"] == "POST"
     assert saved["latency"]["p95"] == 1.0
+
+
+def test_fault_sampler_waits_for_injection(tmp_path):
+    async def scenario():
+        path = tmp_path / "run.json"
+        path.write_text(json.dumps({"state": "armed"}))
+        gen = TrafficGenerator("http://unused.test", p3_run_state_path=str(path))
+        calls, records = [], []
+        async def request(*args):
+            calls.append(gen._p3_state())
+            return 1, False, 200
+        gen._make_request = request
+        task = asyncio.create_task(gen.run("waiting", "fault", 0.2, records.append))
+        await asyncio.sleep(0.1)
+        assert calls == []
+        path.write_text(json.dumps({"state": "injected"}))
+        await task
+        assert calls and all(state == "injected" for state in calls)
+    asyncio.run(scenario())
+
+
+def test_zero_concurrency_rejected_instead_of_hanging():
+    import pytest
+    with pytest.raises(ValueError):
+        TrafficGenerator("http://unused.test", max_concurrency=0)
